@@ -1,0 +1,211 @@
+<?php
+
+namespace Tests\Feature;
+
+use Tests\TestCase;
+
+class LandingPageTest extends TestCase
+{
+    private string $backupPath;
+    private string $storePath;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->storePath = storage_path('app/catalog.json');
+        $this->backupPath = storage_path('app/catalog.json.testbak');
+        if (file_exists($this->storePath)) {
+            copy($this->storePath, $this->backupPath);
+            @unlink($this->storePath);
+        }
+    }
+
+    protected function tearDown(): void
+    {
+        @unlink($this->storePath);
+        if (file_exists($this->backupPath)) {
+            rename($this->backupPath, $this->storePath);
+        }
+        parent::tearDown();
+    }
+
+    public function test_landing_page_renders_brand_bootstrap_and_all_categories(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+        $response->assertSee('Java Computer Seller');
+        $response->assertSee('bootstrap@5.3.3/dist/css/bootstrap.min.css', false);
+
+        foreach (['Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'] as $category) {
+            $response->assertSee($category);
+        }
+    }
+
+    public function test_catalog_config_contains_valid_variants_and_whatsapp_links(): void
+    {
+        $catalog = config('catalog');
+        $this->assertNotEmpty($catalog['whatsapp_number']);
+        $this->assertNotEmpty($catalog['products']);
+
+        foreach ($catalog['products'] as $product) {
+            $this->assertNotEmpty($product['variants'], "Product {$product['name']} must have variants");
+            foreach ($product['variants'] as $variant) {
+                $this->assertGreaterThan(0, $variant['promo_price']);
+                $this->assertLessThanOrEqual($variant['original_price'], $variant['promo_price']);
+            }
+        }
+
+        $response = $this->get('/');
+        $response->assertSee('https://wa.me/' . $catalog['whatsapp_number'], false);
+    }
+
+    public function test_admin_requires_login_and_can_update_landing_content_and_products(): void
+    {
+        $this->get('/admin')->assertRedirect('/admin/login');
+        $this->get('/admin/login')->assertStatus(200)->assertSee('Login Admin');
+
+        $this->post('/admin/login', ['password' => 'wrong-password'])
+            ->assertRedirect('/admin/login')
+            ->assertSessionHasErrors('password');
+
+        $this->post('/admin/login', [
+            'password' => env('ADMIN_PASSWORD'),
+        ])->assertRedirect('/admin');
+
+        $this->get('/admin')->assertStatus(200)->assertSee('Dashboard Admin');
+
+        $this->post('/admin/settings', [
+            'store_name' => 'Java Computer Seller Official',
+            'tagline' => 'Pusat Komputer Resmi & Bergaransi',
+            'whatsapp_number' => '6281122334455',
+            'address' => 'Jl. Merdeka No. 10',
+            'hours' => '08.00 - 21.00 WIB',
+            'hero_badge' => 'PROMO SPESIAL',
+            'hero_title' => 'ASUS ROG Strix G16',
+            'hero_subtitle' => 'Core i7 • RTX 4060 • 16GB RAM',
+            'hero_original_price' => 22999000,
+            'hero_promo_price' => 20999000,
+            'hero_bonus' => 'Gratis Mouse Gaming',
+        ])->assertRedirect('/admin');
+
+        $this->post('/admin/products', [
+            'id' => 'monitor-samsung-24',
+            'name' => 'Samsung Essential Monitor S3',
+            'brand' => 'Samsung',
+            'category' => 'Monitor',
+            'badge' => 'Produk Baru',
+            'image' => 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=800&q=80',
+            'specs_text' => "Panel IPS\n100Hz Refresh Rate",
+            'variants_text' => "24 Inch FHD | 1450000 | 1690000\n27 Inch FHD | 1890000 | 2150000",
+        ])->assertRedirect('/admin');
+
+        $home = $this->get('/');
+        $home->assertStatus(200);
+        $home->assertSee('Java Computer Seller Official');
+        $home->assertSee('ASUS ROG Strix G16');
+        $home->assertSee('Samsung Essential Monitor S3');
+        $home->assertSee('https://wa.me/6281122334455', false);
+
+        $this->delete('/admin/products/monitor-samsung-24')->assertRedirect('/admin');
+        $this->get('/')->assertDontSee('Samsung Essential Monitor S3');
+    }
+
+    public function test_admin_can_download_excel_template_and_bulk_import_products(): void
+    {
+        $this->post('/admin/login', [
+            'password' => env('ADMIN_PASSWORD'),
+        ])->assertRedirect('/admin');
+
+        $template = $this->get('/admin/products/template');
+        $template->assertStatus(200);
+        $this->assertStringContainsString('id,name,brand,category,badge,image,specs_text,variants_text', $template->getContent());
+
+        $csv = implode("\n", [
+            'id,name,brand,category,badge,image,specs_text,variants_text',
+            '"laptop-hp-14s","HP 14s Ryzen 5","HP","Laptop","Promo Kampus","https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80","Layar FHD;Garansi 2 Tahun","8GB / 512GB SSD | 6299000 | 6899000;16GB / 512GB SSD | 6999000 | 7599000"',
+            '"aksesoris-mouse-g102","Logitech G102 Lightsync","Logitech","Aksesoris","Best Seller","https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80","Sensor 8000 DPI;RGB Lightsync","Hitam | 239000 | 299000;Putih | 245000 | 299000"',
+        ]);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('produk-massal.csv', $csv);
+        $this->post('/admin/products/import', ['file' => $file])
+            ->assertRedirect('/admin')
+            ->assertSessionHasNoErrors();
+
+        $home = $this->get('/');
+        $home->assertSee('HP 14s Ryzen 5');
+        $home->assertSee('Logitech G102 Lightsync');
+
+        $badCsv = "id,name,brand,category,badge,image,specs_text,variants_text\nbad-id,Produk,Brand,KategoriSalah,Badge,https://example.com/a.jpg,Spec,Varian | 1000 | 2000";
+        $badFile = \Illuminate\Http\UploadedFile::fake()->createWithContent('bad.csv', $badCsv);
+        $this->post('/admin/products/import', ['file' => $badFile])
+            ->assertRedirect('/admin')
+            ->assertSessionHasErrors('import');
+    }
+
+    public function test_admin_can_upload_multiple_product_photos(): void
+    {
+        $this->post('/admin/login', [
+            'password' => env('ADMIN_PASSWORD'),
+        ])->assertRedirect('/admin');
+
+        $tinyPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        $photo1 = \Illuminate\Http\UploadedFile::fake()->createWithContent('depan.png', $tinyPng);
+        $photo2 = \Illuminate\Http\UploadedFile::fake()->createWithContent('samping.png', $tinyPng);
+
+        $this->post('/admin/products', [
+            'id' => 'laptop-multi-foto',
+            'name' => 'Laptop Multi Foto Series',
+            'brand' => 'ASUS',
+            'category' => 'Laptop',
+            'badge' => 'Galeri Lengkap',
+            'photos' => [$photo1, $photo2],
+            'specs_text' => "Layar OLED\nRAM 16GB",
+            'variants_text' => "16GB / 512GB | 9500000 | 10500000",
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        $home = $this->get('/');
+        $home->assertStatus(200);
+        $home->assertSee('carousel-laptop-multi-foto', false);
+        $home->assertSee('/uploads/products/laptop-multi-foto-', false);
+
+        foreach (glob(public_path('uploads/products/laptop-multi-foto-*')) ?: [] as $f) {
+            @unlink($f);
+        }
+    }
+
+    public function test_admin_can_change_and_remove_logo(): void
+    {
+        $this->post('/admin/login', ['password' => env('ADMIN_PASSWORD')]);
+        $settings = [
+            'store_name' => 'Java Computer Seller',
+            'tagline' => 'Tagline',
+            'whatsapp_number' => '6281234567890',
+            'address' => 'Alamat',
+            'hours' => '09.00 - 20.00',
+            'hero_badge' => 'PROMO',
+            'hero_title' => 'Judul',
+            'hero_subtitle' => 'Sub',
+            'hero_original_price' => 2000,
+            'hero_promo_price' => 1000,
+            'hero_bonus' => 'Bonus',
+        ];
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+
+        $this->post('/admin/settings', $settings + [
+            'logo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('logo.png', $png),
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+        $this->get('/')->assertSee('/uploads/logo/logo-', false)->assertDontSee('>JC<', false);
+
+        $this->post('/admin/settings', $settings + ['remove_logo' => '1'])->assertRedirect('/admin');
+        $this->get('/')->assertDontSee('/uploads/logo/', false)->assertSee('>JC<', false);
+
+        $this->post('/admin/settings', $settings + [
+            'logo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('logo.svg', '<svg onload="alert(1)"/>'),
+        ])->assertSessionHasErrors('logo');
+
+        foreach (glob(public_path('uploads/logo/logo-*')) ?: [] as $f) {
+            @unlink($f);
+        }
+    }
+}
