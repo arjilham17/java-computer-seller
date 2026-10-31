@@ -522,57 +522,26 @@
                 <div class="flex flex-col gap-2 mb-8">
                     <span class="font-label-spec text-label-spec text-wood-ochre-dark font-bold uppercase tracking-wider">MENGAPA BELANJA DI SINI?</span>
                     <h2 class="font-headline-lg text-headline-lg font-bold uppercase text-slate-charcoal mb-0">
-                        KEUNGGULAN {{ strtoupper($catalog['store_name']) }}
+                        {{ $catalog['about_title'] ?? ('KEUNGGULAN ' . strtoupper($catalog['store_name'])) }}
                     </h2>
                     <p class="font-body-md text-body-md text-on-surface-variant max-w-xl mb-0">
-                        Kami bukan sekadar penjual e-commerce biasa. Kami bengkel hardware dan pusat konsultasi komputer fisik yang beroperasi nyata setiap hari.
+                        {{ $catalog['about_subtitle'] ?? 'Kami bukan sekadar penjual e-commerce biasa. Kami bengkel hardware dan pusat konsultasi komputer fisik yang beroperasi nyata setiap hari.' }}
                     </p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div class="bg-surface-container-lowest p-5 border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] flex flex-col gap-3">
-                        <div class="w-12 h-12 bg-wood-ochre-light border-[2px] border-canvas-border flex items-center justify-center text-slate-charcoal">
-                            <span class="material-symbols-outlined text-[28px]">verified_user</span>
+                    @foreach ($catalog['about_features'] ?? [] as $feat)
+                        <div class="bg-surface-container-lowest p-5 border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] flex flex-col gap-3">
+                            <div class="w-12 h-12 bg-wood-ochre-light border-[2px] border-canvas-border flex items-center justify-center text-slate-charcoal">
+                                <span class="material-symbols-outlined text-[28px]">{{ $feat['icon'] ?? 'verified_user' }}</span>
+                            </div>
+                            <h3 class="font-headline-sm text-body-md font-bold uppercase text-slate-charcoal mb-0">
+                                {{ $feat['title'] }}
+                            </h3>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant mb-0">
+                                {{ $feat['desc'] }}
+                            </p>
                         </div>
-                        <h3 class="font-headline-sm text-body-md font-bold uppercase text-slate-charcoal mb-0">
-                            Garansi Resmi &amp; Toko Tukar Baru
-                        </h3>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mb-0">
-                            Semua unit 100% original. Garansi tukar unit baru dalam 7 hari jika terdapat cacat manufaktur tanpa perdebatan.
-                        </p>
-                    </div>
-                    <div class="bg-surface-container-lowest p-5 border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] flex flex-col gap-3">
-                        <div class="w-12 h-12 bg-wood-ochre-light border-[2px] border-canvas-border flex items-center justify-center text-slate-charcoal">
-                            <span class="material-symbols-outlined text-[28px]">inventory</span>
-                        </div>
-                        <h3 class="font-headline-sm text-body-md font-bold uppercase text-slate-charcoal mb-0">
-                            Packing Kayu Aman &amp; Asuransi
-                        </h3>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mb-0">
-                            Pengiriman luar kota dibungkus berlapis bubble wrap tebal plus rangka kayu kokoh agar barang tiba mulus tanpa baret.
-                        </p>
-                    </div>
-                    <div class="bg-surface-container-lowest p-5 border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] flex flex-col gap-3">
-                        <div class="w-12 h-12 bg-wood-ochre-light border-[2px] border-canvas-border flex items-center justify-center text-slate-charcoal">
-                            <span class="material-symbols-outlined text-[28px]">terminal</span>
-                        </div>
-                        <h3 class="font-headline-sm text-body-md font-bold uppercase text-slate-charcoal mb-0">
-                            Gratis Software Siap Pakai
-                        </h3>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mb-0">
-                            Windows teraktivasi, Office, driver terpasang, hingga software utilitas dasar telah disiapkan secara cuma-cuma.
-                        </p>
-                    </div>
-                    <div class="bg-surface-container-lowest p-5 border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] flex flex-col gap-3">
-                        <div class="w-12 h-12 bg-wood-ochre-light border-[2px] border-canvas-border flex items-center justify-center text-slate-charcoal">
-                            <span class="material-symbols-outlined text-[28px]">headset_mic</span>
-                        </div>
-                        <h3 class="font-headline-sm text-body-md font-bold uppercase text-slate-charcoal mb-0">
-                            Support Teknisi Seumur Hidup
-                        </h3>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mb-0">
-                            Ada pertanyaan kendala software atau ingin konsultasi upgrade part di kemudian hari? Teknisi kami siap bantu via WA.
-                        </p>
-                    </div>
+                    @endforeach
                 </div>
             </section>
 
@@ -670,10 +639,10 @@
                         <div class="flex flex-col gap-1.5">
                             <span class="font-label-spec text-label-spec text-wood-ochre-dark font-bold uppercase tracking-wider">LOKASI WORKSHOP KAMI</span>
                             <h2 class="font-headline-lg text-headline-lg font-bold uppercase text-slate-charcoal mb-0">
-                                KUNJUNGI TOKO FISIK
+                                {{ $catalog['contact_title'] ?? 'KUNJUNGI TOKO FISIK' }}
                             </h2>
                             <p class="font-body-md text-body-md text-on-surface-variant mb-0">
-                                Mau cek fisik barang sebelum beli atau konsultasi spek langsung ke teknisi kami? Silakan mampir ke workshop kami.
+                                {{ $catalog['contact_subtitle'] ?? 'Mau cek fisik barang sebelum beli atau konsultasi spek langsung ke teknisi kami? Silakan mampir ke workshop kami.' }}
                             </p>
                         </div>
                         <!-- Location Information Box -->
@@ -708,7 +677,7 @@
                         </div>
                         <!-- Map Component -->
                         <div class="w-full h-56 bg-cover bg-center border-[2.5px] border-canvas-border shadow-[3px_3px_0px_#111111]"
-                             style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDPNB2_D1TQz7yjgMbCMOKcfbTf2XJXZojx1FukCo98HnwKO6FF7jmWG4ha7k-YBwhJlEInTMwIFnT5QwI2oXl2_DrSt2b_3NTdtXrgN7zlZGEFvrkHnDZQEeFlgSYpVWWhlmfrUCRHb5q4RvtwyjGg5nn6OplleQnRANuufJWwar-qtAXz-LrX0r3buIF_ITvWTEpmbn8k4HNLkSNs50fKvfjx--Knw-VhxkEDyXA')"></div>
+                             style="background-image: url('{{ $catalog['map_image'] ?? 'https://lh3.googleusercontent.com/aida-public/AB6AXuDPNB2_D1TQz7yjgMbCMOKcfbTf2XJXZojx1FukCo98HnwKO6FF7jmWG4ha7k-YBwhJlEInTMwIFnT5QwI2oXl2_DrSt2b_3NTdtXrgN7zlZGEFvrkHnDZQEeFlgSYpVWWhlmfrUCRHb5q4RvtwyjGg5nn6OplleQnRANuufJWwar-qtAXz-LrX0r3buIF_ITvWTEpmbn8k4HNLkSNs50fKvfjx--Knw-VhxkEDyXA' }}')"></div>
                     </div>
 
                     <!-- FAQ Accordion -->
@@ -724,44 +693,21 @@
                         </div>
                         <!-- Accordion Items -->
                         <div class="flex flex-col gap-3 pt-1" id="faq-container">
-                            <div class="faq-item bg-surface-container-lowest border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111]">
-                                <button type="button" class="faq-toggle w-full p-3.5 text-left font-headline-sm text-body-md font-bold uppercase text-slate-charcoal flex items-center justify-between">
-                                    <span>Bagaimana alur pemesanan via WhatsApp?</span>
-                                    <span class="material-symbols-outlined transition-transform duration-200">expand_less</span>
-                                </button>
-                                <div class="faq-answer px-3.5 pb-3.5 pt-2 text-on-surface-variant font-body-sm text-body-sm border-t border-canvas-border">
-                                    Cukup klik tombol "Pesan via WhatsApp" pada produk dan varian yang Anda kehendaki. Anda akan diarahkan ke WhatsApp admin dengan teks pesanan yang sudah terisi otomatis (nama produk, varian, qty, dan harga). Admin akan mengonfirmasi ketersediaan stok, ongkir, serta nomor rekening resmi toko.
+                            @foreach ($catalog['faqs'] ?? [] as $fIdx => $faq)
+                                <div class="faq-item bg-surface-container-lowest border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111]">
+                                    <button type="button" class="faq-toggle w-full p-3.5 text-left font-headline-sm text-body-md font-bold uppercase text-slate-charcoal flex items-center justify-between">
+                                        <span>{{ $faq['q'] }}</span>
+                                        <span class="material-symbols-outlined transition-transform duration-200">{{ $fIdx === 0 ? 'expand_less' : 'expand_more' }}</span>
+                                    </button>
+                                    <div class="faq-answer px-3.5 pb-3.5 pt-2 text-on-surface-variant font-body-sm text-body-sm border-t border-canvas-border {{ $fIdx === 0 ? '' : 'hidden' }}">
+                                        {{ $faq['a'] }}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="faq-item bg-surface-container-lowest border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111]">
-                                <button type="button" class="faq-toggle w-full p-3.5 text-left font-headline-sm text-body-md font-bold uppercase text-slate-charcoal flex items-center justify-between">
-                                    <span>Bagaimana jika unit ada kendala setelah diterima?</span>
-                                    <span class="material-symbols-outlined transition-transform duration-200">expand_more</span>
-                                </button>
-                                <div class="faq-answer px-3.5 pb-3.5 pt-2 text-on-surface-variant font-body-sm text-body-sm border-t border-canvas-border hidden">
-                                    Kami memberikan garansi tukar baru 7 hari pertama untuk kerusakan manufaktur/hardware bawaan. Selanjutnya, klaim garansi resmi dapat kami bantu antar ke service center rekanan resmi (Asus, Lenovo, Epson, LG) tanpa biaya administrasi toko.
-                                </div>
-                            </div>
-                            <div class="faq-item bg-surface-container-lowest border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111]">
-                                <button type="button" class="faq-toggle w-full p-3.5 text-left font-headline-sm text-body-md font-bold uppercase text-slate-charcoal flex items-center justify-between">
-                                    <span>Apakah bisa rakit PC dengan spesifikasi kustom sendiri?</span>
-                                    <span class="material-symbols-outlined transition-transform duration-200">expand_more</span>
-                                </button>
-                                <div class="faq-answer px-3.5 pb-3.5 pt-2 text-on-surface-variant font-body-sm text-body-sm border-t border-canvas-border hidden">
-                                    Sangat bisa! Anda bisa menekan tombol "Tanya Admin WA" di atas lalu kirimkan daftar part yang diinginkan atau sebutkan budget total Anda. Tim teknisi kami akan meracik kombinasi part yang seimbang (tanpa bottleneck) beserta penawaran harga terbaik.
-                                </div>
-                            </div>
-                            <div class="faq-item bg-surface-container-lowest border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111]">
-                                <button type="button" class="faq-toggle w-full p-3.5 text-left font-headline-sm text-body-md font-bold uppercase text-slate-charcoal flex items-center justify-between">
-                                    <span>Metode pembayaran apa saja yang didukung?</span>
-                                    <span class="material-symbols-outlined transition-transform duration-200">expand_more</span>
-                                </button>
-                                <div class="faq-answer px-3.5 pb-3.5 pt-2 text-on-surface-variant font-body-sm text-body-sm border-t border-canvas-border hidden">
-                                    Kami melayani Transfer Bank (BCA, Mandiri, BNI, BRI), QRIS Instan, Pembayaran Tunai / Debit di Toko Fisik, serta opsi COD (Cash on Delivery) via kurir instant toko.
-                                </div>
-                            </div>
+                            @endforeach
                         </div>
                     </div>
+                </div>
+            </section>
                 </div>
             </section>
         </div>

@@ -22,14 +22,22 @@ class CatalogController extends Controller
     // shortcut: single-file JSON store in storage/app/catalog.json, upgrade to relational tables when concurrent multi-admin edits or >200 SKUs are needed
     private function loadCatalog(): array
     {
+        $default = config('catalog');
         $path = storage_path('app/catalog.json');
         if (is_file($path)) {
             $decoded = json_decode((string) file_get_contents($path), true);
             if (is_array($decoded) && isset($decoded['products'])) {
+                $decoded['about_title'] = $decoded['about_title'] ?? ($default['about_title'] ?? 'KEUNGGULAN JAVA COMPUTER');
+                $decoded['about_subtitle'] = $decoded['about_subtitle'] ?? ($default['about_subtitle'] ?? 'Kami bukan sekadar penjual e-commerce biasa. Kami bengkel hardware dan pusat konsultasi komputer fisik yang beroperasi nyata setiap hari.');
+                $decoded['about_features'] = $decoded['about_features'] ?? ($default['about_features'] ?? []);
+                $decoded['contact_title'] = $decoded['contact_title'] ?? ($default['contact_title'] ?? 'KUNJUNGI TOKO FISIK');
+                $decoded['contact_subtitle'] = $decoded['contact_subtitle'] ?? ($default['contact_subtitle'] ?? 'Mau cek fisik barang sebelum beli atau konsultasi spek langsung ke teknisi kami? Silakan mampir ke workshop kami.');
+                $decoded['map_image'] = $decoded['map_image'] ?? ($default['map_image'] ?? '');
+                $decoded['faqs'] = $decoded['faqs'] ?? ($default['faqs'] ?? []);
                 return $decoded;
             }
         }
-        return config('catalog');
+        return $default;
     }
 
     private function saveCatalog(array $catalog): void
@@ -97,6 +105,13 @@ class CatalogController extends Controller
             'hero_bonus' => 'required|string|max:180',
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'remove_logo' => 'nullable|boolean',
+            'about_title' => 'nullable|string|max:150',
+            'about_subtitle' => 'nullable|string|max:500',
+            'about_features_text' => 'nullable|string|max:3000',
+            'contact_title' => 'nullable|string|max:150',
+            'contact_subtitle' => 'nullable|string|max:500',
+            'map_image' => 'nullable|string|max:1000',
+            'faq_text' => 'nullable|string|max:4000',
         ]);
 
         $catalog = $this->loadCatalog();
@@ -123,8 +138,60 @@ class CatalogController extends Controller
             'bonus' => $data['hero_bonus'],
         ];
 
+        if (array_key_exists('about_title', $data) && $data['about_title'] !== null) {
+            $catalog['about_title'] = $data['about_title'];
+        }
+        if (array_key_exists('about_subtitle', $data) && $data['about_subtitle'] !== null) {
+            $catalog['about_subtitle'] = $data['about_subtitle'];
+        }
+        if (array_key_exists('about_features_text', $data) && $data['about_features_text'] !== null) {
+            $icons = ['verified_user', 'inventory', 'terminal', 'headset_mic', 'build', 'thumb_up'];
+            $features = [];
+            foreach (preg_split('/\r\n|\r|\n/', (string) $data['about_features_text']) as $idx => $line) {
+                $line = trim($line);
+                if ($line === '') continue;
+                $parts = array_map('trim', explode('|', $line, 3));
+                if (!empty($parts[0])) {
+                    $features[] = [
+                        'title' => $parts[0],
+                        'desc' => $parts[1] ?? '',
+                        'icon' => !empty($parts[2]) ? $parts[2] : ($icons[$idx % count($icons)]),
+                    ];
+                }
+            }
+            if (!empty($features)) {
+                $catalog['about_features'] = $features;
+            }
+        }
+        if (array_key_exists('contact_title', $data) && $data['contact_title'] !== null) {
+            $catalog['contact_title'] = $data['contact_title'];
+        }
+        if (array_key_exists('contact_subtitle', $data) && $data['contact_subtitle'] !== null) {
+            $catalog['contact_subtitle'] = $data['contact_subtitle'];
+        }
+        if (array_key_exists('map_image', $data) && $data['map_image'] !== null) {
+            $catalog['map_image'] = $data['map_image'];
+        }
+        if (array_key_exists('faq_text', $data) && $data['faq_text'] !== null) {
+            $faqs = [];
+            foreach (preg_split('/\r\n|\r|\n/', (string) $data['faq_text']) as $line) {
+                $line = trim($line);
+                if ($line === '') continue;
+                $parts = array_map('trim', explode('|', $line, 2));
+                if (!empty($parts[0])) {
+                    $faqs[] = [
+                        'q' => $parts[0],
+                        'a' => $parts[1] ?? '',
+                    ];
+                }
+            }
+            if (!empty($faqs)) {
+                $catalog['faqs'] = $faqs;
+            }
+        }
+
         $this->saveCatalog($catalog);
-        return redirect('/admin')->with('status', 'Pengaturan toko & Hero Flash Deal berhasil diperbarui.');
+        return redirect('/admin')->with('status', 'Pengaturan toko, hero deal, tentang kami & kontak berhasil diperbarui.');
     }
 
     // shortcut: stores uploaded product photos directly in public/uploads/products, upgrade to S3/object storage when deploying across multiple stateless app servers

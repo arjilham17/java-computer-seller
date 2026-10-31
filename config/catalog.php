@@ -18,6 +18,54 @@ return [
 
     'categories' => ['Semua', 'Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'],
 
+    'about_title' => 'KEUNGGULAN JAVA COMPUTER',
+    'about_subtitle' => 'Kami bukan sekadar penjual e-commerce biasa. Kami bengkel hardware dan pusat konsultasi komputer fisik yang beroperasi nyata setiap hari.',
+    'about_features' => [
+        [
+            'title' => 'Garansi Resmi & Toko Tukar Baru',
+            'desc' => 'Semua unit 100% original. Garansi tukar unit baru dalam 7 hari jika terdapat cacat manufaktur tanpa perdebatan.',
+            'icon' => 'verified_user',
+        ],
+        [
+            'title' => 'Packing Kayu Aman & Asuransi',
+            'desc' => 'Pengiriman luar kota dibungkus berlapis bubble wrap tebal plus rangka kayu kokoh agar barang tiba mulus tanpa baret.',
+            'icon' => 'inventory',
+        ],
+        [
+            'title' => 'Gratis Software Siap Pakai',
+            'desc' => 'Windows teraktivasi, Office, driver terpasang, hingga software utilitas dasar telah disiapkan secara cuma-cuma.',
+            'icon' => 'terminal',
+        ],
+        [
+            'title' => 'Support Teknisi Seumur Hidup',
+            'desc' => 'Ada pertanyaan kendala software atau ingin konsultasi upgrade part di kemudian hari? Teknisi kami siap bantu via WA.',
+            'icon' => 'headset_mic',
+        ],
+    ],
+
+    'contact_title' => 'KUNJUNGI TOKO FISIK',
+    'contact_subtitle' => 'Mau cek fisik barang sebelum beli atau konsultasi spek langsung ke teknisi kami? Silakan mampir ke workshop kami.',
+    'map_image' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuDPNB2_D1TQz7yjgMbCMOKcfbTf2XJXZojx1FukCo98HnwKO6FF7jmWG4ha7k-YBwhJlEInTMwIFnT5QwI2oXl2_DrSt2b_3NTdtXrgN7zlZGEFvrkHnDZQEeFlgSYpVWWhlmfrUCRHb5q4RvtwyjGg5nn6OplleQnRANuufJWwar-qtAXz-LrX0r3buIF_ITvWTEpmbn8k4HNLkSNs50fKvfjx--Knw-VhxkEDyXA',
+
+    'faqs' => [
+        [
+            'q' => 'Bagaimana alur pemesanan via WhatsApp?',
+            'a' => 'Cukup klik tombol "Pesan via WhatsApp" pada produk dan varian yang Anda kehendaki. Anda akan diarahkan ke WhatsApp admin dengan teks pesanan yang sudah terisi otomatis (nama produk, varian, qty, dan harga). Admin akan mengonfirmasi ketersediaan stok, ongkir, serta nomor rekening resmi toko.',
+        ],
+        [
+            'q' => 'Bagaimana jika unit ada kendala setelah diterima?',
+            'a' => 'Kami memberikan garansi tukar baru 7 hari pertama untuk kerusakan manufaktur/hardware bawaan. Selanjutnya, klaim garansi resmi dapat kami bantu antar ke service center rekanan resmi (Asus, Lenovo, Epson, LG) tanpa biaya administrasi toko.',
+        ],
+        [
+            'q' => 'Apakah bisa rakit PC dengan spesifikasi kustom sendiri?',
+            'a' => 'Sangat bisa! Anda bisa menekan tombol "Tanya Admin WA" di atas lalu kirimkan daftar part yang diinginkan atau sebutkan budget total Anda. Tim teknisi kami akan meracik kombinasi part yang seimbang (tanpa bottleneck) beserta penawaran harga terbaik.',
+        ],
+        [
+            'q' => 'Metode pembayaran apa saja yang didukung?',
+            'a' => 'Kami melayani Transfer Bank (BCA, Mandiri, BNI, BRI), QRIS Instan, Pembayaran Tunai / Debit di Toko Fisik, serta opsi COD (Cash on Delivery) via kurir instant toko.',
+        ],
+    ],
+
     'products' => [
         [
             'id' => 'laptop-lenovo-ideapad',

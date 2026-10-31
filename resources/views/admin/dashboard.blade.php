@@ -166,7 +166,55 @@
                         <input type="text" name="hero_bonus" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['bonus'] }}" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2">Simpan Pengaturan & Hero</button>
+                    @php
+                        $aboutFeaturesText = implode("\n", array_map(function($f) {
+                            $line = ($f['title'] ?? '') . ' | ' . ($f['desc'] ?? '');
+                            if (!empty($f['icon'])) {
+                                $line .= ' | ' . $f['icon'];
+                            }
+                            return $line;
+                        }, $catalog['about_features'] ?? []));
+
+                        $faqsText = implode("\n", array_map(function($faq) {
+                            return ($faq['q'] ?? '') . ' | ' . ($faq['a'] ?? '');
+                        }, $catalog['faqs'] ?? []));
+                    @endphp
+
+                    <hr class="border-2 border-dark opacity-100">
+                    <h3 class="h6 fw-bold mb-2">Konten #tentang-kami</h3>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Judul Section Keunggulan</label>
+                        <input type="text" name="about_title" class="form-control form-control-sm" value="{{ $catalog['about_title'] ?? '' }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Deskripsi Section</label>
+                        <textarea name="about_subtitle" rows="2" class="form-control form-control-sm">{{ $catalog['about_subtitle'] ?? '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Poin Keunggulan (1 baris per item: <code>Judul | Deskripsi | Icon</code>)</label>
+                        <textarea name="about_features_text" rows="4" class="form-control form-control-sm font-monospace small">{{ $aboutFeaturesText }}</textarea>
+                    </div>
+
+                    <hr class="border-2 border-dark opacity-100">
+                    <h3 class="h6 fw-bold mb-2">Konten #kontak &amp; FAQ</h3>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Judul Section Kontak</label>
+                        <input type="text" name="contact_title" class="form-control form-control-sm" value="{{ $catalog['contact_title'] ?? '' }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Deskripsi Section Kontak</label>
+                        <textarea name="contact_subtitle" rows="2" class="form-control form-control-sm">{{ $catalog['contact_subtitle'] ?? '' }}</textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">URL Gambar Preview Peta Toko</label>
+                        <input type="text" name="map_image" class="form-control form-control-sm" value="{{ $catalog['map_image'] ?? '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Daftar FAQ (1 baris per pertanyaan: <code>Pertanyaan | Jawaban</code>)</label>
+                        <textarea name="faq_text" rows="4" class="form-control form-control-sm font-monospace small">{{ $faqsText }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">Simpan Pengaturan &amp; Konten</button>
                 </form>
             </div>
         </div>

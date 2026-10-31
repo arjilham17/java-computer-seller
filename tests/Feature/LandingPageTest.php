@@ -208,4 +208,47 @@ class LandingPageTest extends TestCase
             @unlink($f);
         }
     }
+
+    public function test_admin_can_update_about_us_and_contact_content(): void
+    {
+        $this->post('/admin/login', ['password' => env('ADMIN_PASSWORD')]);
+        $settings = [
+            'store_name' => 'Java Computer Seller',
+            'tagline' => 'Tagline Toko Komputer',
+            'whatsapp_number' => '6281234567890',
+            'address' => 'Jl. Kaliurang KM 5 No. 12, Sleman',
+            'hours' => '09.00 - 21.00 WIB',
+            'hero_badge' => 'PROMO SPECIAL',
+            'hero_title' => 'PC Gaming Monster',
+            'hero_subtitle' => 'RTX 4080 • Core i9',
+            'hero_original_price' => 35000000,
+            'hero_promo_price' => 32000000,
+            'hero_bonus' => 'Bonus Keyboard Mechanical',
+            'about_title' => 'KEUNGGULAN UTAMA WORKSHOP KAMI',
+            'about_subtitle' => 'Layanan rakit PC spesialis gaming & workstation.',
+            'about_features_text' => "Komponen 100% Asli | Bergaransi distributor resmi dan ada nota fisik | verified_user\nTeknisi Berpengalaman | Siap bantu uji performa dan instalasi sistem",
+            'contact_title' => 'KUNJUNGI SHOWROOM KAMI',
+            'contact_subtitle' => 'Silakan datang langsung untuk konsultasi hardware dan benchmark.',
+            'map_image' => 'https://example.com/custom-map.png',
+            'faq_text' => "Apakah bisa rakit langsung di tempat? | Ya, teknisi kami dapat merakit di depan Anda langsung.\nApakah ada garansi toko? | Ya, ada garansi tukar baru 7 hari pertama.",
+        ];
+
+        $this->post('/admin/settings', $settings)
+            ->assertRedirect('/admin')
+            ->assertSessionHasNoErrors();
+
+        $home = $this->get('/');
+        $home->assertStatus(200);
+        $home->assertSee('KEUNGGULAN UTAMA WORKSHOP KAMI');
+        $home->assertSee('Layanan rakit PC spesialis gaming & workstation.');
+        $home->assertSee('Komponen 100% Asli');
+        $home->assertSee('Bergaransi distributor resmi dan ada nota fisik');
+        $home->assertSee('Teknisi Berpengalaman');
+        $home->assertSee('KUNJUNGI SHOWROOM KAMI');
+        $home->assertSee('Silakan datang langsung untuk konsultasi hardware dan benchmark.');
+        $home->assertSee('Jl. Kaliurang KM 5 No. 12, Sleman');
+        $home->assertSee('https://example.com/custom-map.png');
+        $home->assertSee('Apakah bisa rakit langsung di tempat?');
+        $home->assertSee('Ya, teknisi kami dapat merakit di depan Anda langsung.');
+    }
 }
