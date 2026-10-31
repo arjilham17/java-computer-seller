@@ -18,6 +18,7 @@ class CatalogController extends Controller
         'photos.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
         'specs_text' => 'required|string|max:1000',
         'variants_text' => 'required|string|max:2000',
+        'is_sold_out' => 'nullable|boolean',
     ];
     // shortcut: single-file JSON store in storage/app/catalog.json, upgrade to relational tables when concurrent multi-admin edits or >200 SKUs are needed
     private function loadCatalog(): array
@@ -267,6 +268,7 @@ class CatalogController extends Controller
             'images' => $images,
             'specs' => $specs ?: ['Garansi Resmi'],
             'variants' => $variants,
+            'is_sold_out' => !empty($data['is_sold_out']),
         ];
     }
 
@@ -411,6 +413,30 @@ class CatalogController extends Controller
         $this->saveCatalog($catalog);
 
         return redirect('/admin')->with('status', count($parsedProducts) . ' produk berhasil diposting secara massal.');
+    }
+
+    public function toggleSoldOut(string $id)
+    {
+        if (!session('admin_authenticated')) {
+            return redirect('/admin/login');
+        }
+
+        $catalog = $this->loadCatalog();
+        $updated = false;
+        foreach ($catalog['products'] as &$product) {
+            if ($product['id'] === $id) {
+                $product['is_sold_out'] = !($product['is_sold_out'] ?? false);
+                $updated = true;
+                break;
+            }
+        }
+        unset($product);
+
+        if ($updated) {
+            $this->saveCatalog($catalog);
+        }
+
+        return redirect('/admin')->with('status', 'Status produk berhasil diperbarui.');
     }
 
     public function deleteProduct(string $id)

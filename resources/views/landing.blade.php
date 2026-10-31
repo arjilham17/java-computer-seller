@@ -394,14 +394,20 @@
                                 "Apakah stok promo ini masih tersedia?",
                             ]);
                         @endphp
-                        <div class="product-card flex flex-col bg-surface-container-lowest border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111]"
+                        <div class="product-card flex flex-col bg-surface-container-lowest border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] {{ !empty($product['is_sold_out']) ? 'opacity-90' : '' }}"
                              data-brand="{{ $product['brand'] }}"
                              data-category="{{ $product['category'] }}"
-                             data-title="{{ $product['name'] }}">
+                             data-title="{{ $product['name'] }}"
+                             data-sold-out="{{ !empty($product['is_sold_out']) ? '1' : '0' }}">
                             <div class="relative bg-canvas-cream border-b-[2px] border-canvas-border p-3">
                                 <span class="absolute top-5 left-5 z-20 px-2 py-0.5 bg-wood-ochre-dark text-on-primary font-label-code text-label-code font-bold uppercase border border-canvas-border">
                                     {{ $product['badge'] }}
                                 </span>
+                                @if (!empty($product['is_sold_out']))
+                                    <span class="absolute top-5 right-5 z-20 px-2 py-0.5 bg-red-600 text-white font-label-code text-label-code font-bold uppercase border border-canvas-border shadow-[2px_2px_0px_#111111]">
+                                        SOLD OUT
+                                    </span>
+                                @endif
                                 @if (count($images) > 1)
                                     <div id="{{ $carouselId }}" class="carousel slide border border-canvas-border">
                                         <div class="carousel-inner">
@@ -426,9 +432,13 @@
                                          src="{{ $images[0] }}"
                                          loading="lazy"/>
                                 @endif
-                                <div class="flex items-center justify-between mt-2 pt-2 border-t border-canvas-border font-label-spec text-label-spec font-bold text-on-surface-variant uppercase">
-                                    <span>{{ $product['category'] }} • {{ $product['brand'] }}</span>
-                                    <span class="text-whatsapp-green-dark">UNIT READY STOCK</span>
+                                <div class="flex items-center justify-between mt-2 pt-2 border-t border-canvas-border font-label-spec text-label-spec font-bold uppercase">
+                                    <span class="text-on-surface-variant">{{ $product['category'] }} • {{ $product['brand'] }}</span>
+                                    @if (!empty($product['is_sold_out']))
+                                        <span class="text-red-700 bg-red-100 px-1 border border-red-300 font-bold">SOLD OUT</span>
+                                    @else
+                                        <span class="text-whatsapp-green-dark">UNIT READY STOCK</span>
+                                    @endif
                                 </div>
                             </div>
                             <div class="p-4 flex flex-col flex-grow gap-3">
@@ -484,12 +494,21 @@
                                         <input class="qty-input w-full p-2.5 text-center bg-canvas-cream border-[2px] border-canvas-border font-label-code text-body-md font-bold focus:outline-none focus:shadow-[3px_3px_0px_#111111]"
                                                min="1" max="50" type="number" value="1"/>
                                     </div>
-                                    <a class="wa-btn flex-1 inline-flex items-center justify-center p-2.5 bg-whatsapp-green hover:bg-whatsapp-green-dark text-slate-charcoal font-headline-sm text-body-sm font-bold uppercase border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_#111111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#111111] transition-all text-center"
-                                       data-role="wa-link"
-                                       href="https://wa.me/{{ $catalog['whatsapp_number'] }}?text={{ urlencode($initialText) }}"
-                                       rel="noopener noreferrer" target="_blank">
-                                        <span class="material-symbols-outlined text-[18px] mr-1">chat</span>Pesan via WhatsApp
-                                    </a>
+                                    @if (!empty($product['is_sold_out']))
+                                        <a class="wa-btn flex-1 inline-flex items-center justify-center p-2.5 bg-neutral-300 hover:bg-neutral-400 text-slate-charcoal font-headline-sm text-body-sm font-bold uppercase border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111] transition-all text-center"
+                                           data-role="wa-link"
+                                           href="https://wa.me/{{ $catalog['whatsapp_number'] }}?text={{ urlencode('Halo ' . $catalog['store_name'] . ', apakah produk ini bisa di-pre-order / restock: ' . $product['name'] . ' (' . $product['brand'] . ')') }}"
+                                           rel="noopener noreferrer" target="_blank">
+                                            <span class="material-symbols-outlined text-[18px] mr-1">history_toggle_off</span>Sold Out (Tanya Restock)
+                                        </a>
+                                    @else
+                                        <a class="wa-btn flex-1 inline-flex items-center justify-center p-2.5 bg-whatsapp-green hover:bg-whatsapp-green-dark text-slate-charcoal font-headline-sm text-body-sm font-bold uppercase border-[2px] border-canvas-border shadow-[3px_3px_0px_#111111] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_#111111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#111111] transition-all text-center"
+                                           data-role="wa-link"
+                                           href="https://wa.me/{{ $catalog['whatsapp_number'] }}?text={{ urlencode($initialText) }}"
+                                           rel="noopener noreferrer" target="_blank">
+                                            <span class="material-symbols-outlined text-[18px] mr-1">chat</span>Pesan via WhatsApp
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -807,7 +826,14 @@
         if (promoEl) promoEl.textContent = formatRupiah(price);
         if (saveBadge) saveBadge.textContent = 'Hemat ' + formatRupiah(saveAmount);
 
-        const messageText = [
+        const isSoldOut = card.getAttribute('data-sold-out') === '1';
+        const messageText = isSoldOut ? [
+            `Halo ${STORE_NAME}, saya ingin menanyakan apakah produk ini bisa restock:`,
+            `- Produk: ${title} (${brand})`,
+            `- Varian/Spesifikasi: ${label}`,
+            ``,
+            `Kapan perkiraan unit ready kembali?`
+        ].join('\n') : [
             `Halo ${STORE_NAME}, saya ingin memesan:`,
             `- Produk: ${title} (${brand})`,
             `- Varian/Spesifikasi: ${label}`,

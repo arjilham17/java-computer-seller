@@ -251,4 +251,28 @@ class LandingPageTest extends TestCase
         $home->assertSee('Apakah bisa rakit langsung di tempat?');
         $home->assertSee('Ya, teknisi kami dapat merakit di depan Anda langsung.');
     }
+
+    public function test_admin_can_toggle_product_sold_out(): void
+    {
+        $this->post('/admin/products/laptop-lenovo-ideapad/toggle-sold')
+            ->assertRedirect('/admin/login');
+
+        $this->post('/admin/login', ['password' => env('ADMIN_PASSWORD')]);
+
+        $this->post('/admin/products/laptop-lenovo-ideapad/toggle-sold')
+            ->assertRedirect('/admin')
+            ->assertSessionHas('status');
+
+        $home = $this->get('/');
+        $home->assertStatus(200);
+        $home->assertSee('SOLD OUT');
+        $home->assertSee('Sold Out (Tanya Restock)');
+
+        $this->post('/admin/products/laptop-lenovo-ideapad/toggle-sold')
+            ->assertRedirect('/admin');
+
+        $homeAgain = $this->get('/');
+        $homeAgain->assertStatus(200);
+        $homeAgain->assertSee('UNIT READY STOCK');
+    }
 }

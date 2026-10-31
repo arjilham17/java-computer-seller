@@ -289,6 +289,10 @@
                         <label class="form-label small fw-semibold">Daftar Varian (Format per baris: <code>Label Varian | Harga Promo | Harga Coret</code>)</label>
                         <textarea name="variants_text" id="f-variants" rows="3" class="form-control form-control-sm font-monospace" placeholder="RAM 8GB / SSD 256GB | 5899000 | 6499000&#10;RAM 16GB / SSD 512GB | 6899000 | 7499000" required></textarea>
                     </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_sold_out" value="1" id="f-sold-out">
+                        <label class="form-check-label small fw-semibold" for="f-sold-out">Tandai Sold Out (Stok Habis)</label>
+                    </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-success btn-sm px-4 py-2">Simpan Produk</button>
                         <button type="reset" class="btn btn-light btn-sm">Reset Form</button>
@@ -317,13 +321,24 @@
                                 @endphp
                                 <tr>
                                     <td>
-                                        <div class="fw-semibold">{{ $p['name'] }}</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="fw-semibold">{{ $p['name'] }}</div>
+                                            @if (!empty($p['is_sold_out']))
+                                                <span class="badge bg-danger rounded-0">SOLD OUT</span>
+                                            @endif
+                                        </div>
                                         <small class="text-secondary">{{ $p['brand'] }} • <code>{{ $p['id'] }}</code> ({{ count($p['images'] ?? [$p['image']]) }} foto)</small>
                                     </td>
                                     <td><span class="badge text-bg-light border border-dark rounded-0">{{ $p['category'] }}</span></td>
                                     <td><small>{{ count($p['variants']) }} varian</small></td>
                                     <td class="text-end">
                                         <div class="d-inline-flex gap-1">
+                                            <form method="POST" action="/admin/products/{{ $p['id'] }}/toggle-sold" class="m-0 d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm {{ !empty($p['is_sold_out']) ? 'btn-success' : 'btn-dark' }}" title="{{ !empty($p['is_sold_out']) ? 'Tandai Ready Stock' : 'Tandai Sold Out' }}">
+                                                    {{ !empty($p['is_sold_out']) ? 'Set Ready' : 'Sold Out' }}
+                                                </button>
+                                            </form>
                                             <button type="button" class="btn btn-primary btn-sm edit-btn"
                                                     data-id="{{ $p['id'] }}"
                                                     data-name="{{ $p['name'] }}"
@@ -332,7 +347,8 @@
                                                     data-badge="{{ $p['badge'] }}"
                                                     data-image="{{ $imgList }}"
                                                     data-specs="{{ $sLines }}"
-                                                    data-variants="{{ $vLines }}">
+                                                    data-variants="{{ $vLines }}"
+                                                    data-sold-out="{{ !empty($p['is_sold_out']) ? '1' : '0' }}">
                                                 Edit
                                             </button>
                                             <form method="POST" action="/admin/products/{{ $p['id'] }}" onsubmit="return confirm('Hapus produk ini?')">
@@ -385,6 +401,7 @@ document.querySelectorAll('.edit-btn').forEach((btn) => {
         document.getElementById('f-image').value = btn.dataset.image;
         document.getElementById('f-specs').value = btn.dataset.specs;
         document.getElementById('f-variants').value = btn.dataset.variants;
+        document.getElementById('f-sold-out').checked = btn.dataset.soldOut === '1';
         document.getElementById('product-form').scrollIntoView({ behavior: 'smooth' });
     });
 });

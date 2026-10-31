@@ -12,4 +12,5 @@ Route::post('/admin/settings', [CatalogController::class, 'updateSettings'])->na
 Route::get('/admin/products/template', [CatalogController::class, 'downloadTemplate'])->name('admin.products.template');
 Route::post('/admin/products/import', [CatalogController::class, 'importProducts'])->name('admin.products.import');
 Route::post('/admin/products', [CatalogController::class, 'saveProduct'])->name('admin.products.save');
+Route::post('/admin/products/{id}/toggle-sold', [CatalogController::class, 'toggleSoldOut'])->name('admin.products.toggle_sold');
 Route::delete('/admin/products/{id}', [CatalogController::class, 'deleteProduct'])->name('admin.products.delete');
