@@ -62,7 +62,7 @@ class CatalogController extends Controller
                 $decoded['contact_title'] = $decoded['contact_title'] ?? ($default['contact_title'] ?? 'KUNJUNGI TOKO FISIK');
                 $decoded['contact_subtitle'] = $decoded['contact_subtitle'] ?? ($default['contact_subtitle'] ?? 'Mau cek fisik barang sebelum beli atau konsultasi spek langsung ke teknisi kami? Silakan mampir ke workshop kami.');
                 $decoded['map_image'] = $decoded['map_image'] ?? ($default['map_image'] ?? '');
-                $decoded['map_link'] = $decoded['map_link'] ?? ($default['map_link'] ?? 'https://maps.app.goo.gl/YGa9azM7gmrinEbm8');
+                $decoded['map_link'] = $decoded['map_link'] ?? ($default['map_link'] ?? 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8');
                 $decoded['faqs'] = $decoded['faqs'] ?? ($default['faqs'] ?? []);
                 return $decoded;
             }

@@ -36,8 +36,8 @@ class LandingPageTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Java Computer Seller');
         $response->assertSee('bootstrap@5.3.3/dist/css/bootstrap.min.css', false);
-        $response->assertSee('https://maps.app.goo.gl/YGa9azM7gmrinEbm8');
-        $response->assertSee('-7.3696938,108.1764225');
+        $response->assertSee('https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8');
+        $response->assertSee('-7.3425692,108.1080775');
 
         foreach (['Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'] as $category) {
             $response->assertSee($category);

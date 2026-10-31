@@ -45,8 +45,8 @@ return [
 
     'contact_title' => 'KUNJUNGI TOKO FISIK',
     'contact_subtitle' => 'Mau cek fisik barang sebelum beli atau konsultasi spek langsung ke teknisi kami? Silakan mampir ke workshop kami.',
-    'map_image' => 'https://maps.google.com/maps?q=-7.3696938,108.1764225&hl=id&z=17&output=embed',
-    'map_link' => 'https://maps.app.goo.gl/YGa9azM7gmrinEbm8',
+    'map_image' => 'https://maps.google.com/maps?q=-7.3425692,108.1080775&hl=id&z=17&output=embed',
+    'map_link' => 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8',
 
     'faqs' => [
         [

@@ -211,7 +211,7 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Link Tautan Google Maps</label>
-                        <input type="text" name="map_link" class="form-control form-control-sm" value="{{ $catalog['map_link'] ?? 'https://maps.app.goo.gl/YGa9azM7gmrinEbm8' }}" placeholder="https://maps.app.goo.gl/...">
+                        <input type="text" name="map_link" class="form-control form-control-sm" value="{{ $catalog['map_link'] ?? 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8' }}" placeholder="https://maps.app.goo.gl/...">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Daftar FAQ (1 baris per pertanyaan: <code>Pertanyaan | Jawaban</code>)</label>
