@@ -4,17 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin — {{ $catalog['store_name'] }}</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&amp;family=Space+Grotesk:wght@600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #fcf9f3;
+            color: #1c1c18;
+            font-family: 'Work Sans', sans-serif;
+        }
+        h1, h2, h3, .font-headline {
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+        }
+        .brutal-nav {
+            background-color: #F3ECE1;
+            border-bottom: 3px solid #111111;
+            box-shadow: 0 4px 0px #111111;
+        }
+        .brutal-card {
+            background-color: #ffffff;
+            border: 2.5px solid #111111;
+            box-shadow: 4px 4px 0px #111111;
+            border-radius: 0;
+        }
+        .form-control, .form-select {
+            background-color: #F3ECE1;
+            border: 2px solid #111111;
+            border-radius: 0;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #ffffff;
+            border-color: #111111;
+            box-shadow: 3px 3px 0px #111111;
+        }
+        .btn {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 2px solid #111111 !important;
+            box-shadow: 2px 2px 0px #111111;
+            border-radius: 0;
+        }
+        .btn-primary {
+            background-color: #d49b55;
+            color: #1A1A1A;
+        }
+        .btn-primary:hover {
+            background-color: #E5AC67;
+            color: #1A1A1A;
+        }
+        .btn-success {
+            background-color: #22C55E;
+            color: #1A1A1A;
+        }
+        .btn-success:hover {
+            background-color: #16A34A;
+            color: #ffffff;
+        }
+    </style>
 </head>
-<body class="bg-light">
-<nav class="navbar bg-white border-bottom py-3 mb-4">
+<body>
+<nav class="navbar brutal-nav py-3 mb-4">
     <div class="container d-flex justify-content-between align-items-center">
-        <div class="fw-bold">Dashboard Admin — {{ $catalog['store_name'] }}</div>
+        <div class="fw-bold font-headline fs-5">Dashboard Admin — {{ $catalog['store_name'] }}</div>
         <div class="d-flex gap-2">
-            <a href="/" target="_blank" class="btn btn-outline-primary btn-sm fw-semibold">Lihat Landing Page</a>
+            <a href="/" target="_blank" class="btn btn-primary btn-sm">Lihat Landing Page</a>
             <form method="POST" action="/admin/logout" class="m-0">
                 @csrf
-                <button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button>
+                <button type="submit" class="btn btn-light btn-sm">Logout</button>
             </form>
         </div>
     </div>
@@ -22,10 +81,10 @@
 
 <div class="container pb-5">
     @if (session('status'))
-        <div class="alert alert-success">{{ session('status') }}</div>
+        <div class="alert alert-success rounded-0 border-2 border-dark fw-semibold">{{ session('status') }}</div>
     @endif
     @if ($errors->any())
-        <div class="alert alert-danger">
+        <div class="alert alert-danger rounded-0 border-2 border-dark">
             <ul class="mb-0">
                 @foreach ($errors->all() as $err)
                     <li>{{ $err }}</li>
@@ -36,7 +95,7 @@
 
     <div class="row g-4">
         <div class="col-lg-5">
-            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <div class="brutal-card p-4 mb-4">
                 <h2 class="h5 fw-bold mb-3">1. Profil Toko & Hero Flash Deal</h2>
                 <form method="POST" action="/admin/settings" enctype="multipart/form-data">
                     @csrf
@@ -44,9 +103,9 @@
                         <label class="form-label small fw-semibold" for="f-logo">Logo Toko (PNG/JPG/WEBP, maks 2MB)</label>
                         <div class="d-flex align-items-center gap-2">
                             @if (!empty($catalog['logo']))
-                                <img src="{{ $catalog['logo'] }}" alt="Logo saat ini" style="height: 40px; width: auto;" class="border rounded">
+                                <img src="{{ $catalog['logo'] }}" alt="Logo saat ini" style="height: 40px; width: auto;" class="border border-2 border-dark p-1 bg-white">
                             @else
-                                <span class="badge text-bg-primary p-2">JC</span>
+                                <span class="badge p-2 border border-2 border-dark rounded-0" style="background:#B87834;color:#fff;">JC</span>
                             @endif
                             <input type="file" name="logo" id="f-logo" class="form-control form-control-sm" accept="image/png,image/jpeg,image/webp">
                         </div>
@@ -78,7 +137,7 @@
                         <input type="text" name="hours" class="form-control form-control-sm" value="{{ $catalog['hours'] }}" required>
                     </div>
 
-                    <hr>
+                    <hr class="border-2 border-dark opacity-100">
                     <h3 class="h6 fw-bold mb-2">Kartu Hero Flash Deal</h3>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Badge Promo</label>
@@ -107,16 +166,16 @@
                         <input type="text" name="hero_bonus" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['bonus'] }}" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 fw-semibold btn-sm py-2">Simpan Pengaturan & Hero</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2">Simpan Pengaturan & Hero</button>
                 </form>
             </div>
         </div>
 
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <div class="brutal-card p-4 mb-4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                     <h2 class="h5 fw-bold mb-0">2. Posting Massal (Template Excel)</h2>
-                    <a href="/admin/products/template" class="btn btn-outline-primary btn-sm fw-semibold">
+                    <a href="/admin/products/template" class="btn btn-light btn-sm">
                         Download Template Excel (.csv)
                     </a>
                 </div>
@@ -128,12 +187,12 @@
                     <input type="hidden" name="csv_payload" id="csv-payload">
                     <div class="input-group input-group-sm">
                         <input type="file" name="file" id="bulk-file" class="form-control" accept=".csv,.xlsx,.xls" required>
-                        <button type="submit" class="btn btn-primary fw-semibold px-3">Import Produk Massal</button>
+                        <button type="submit" class="btn btn-primary px-3">Import Produk Massal</button>
                     </div>
                 </form>
             </div>
 
-            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <div class="brutal-card p-4 mb-4">
                 <h2 class="h5 fw-bold mb-3">3. Tambah / Edit Produk Satuan</h2>
                 <form method="POST" action="/admin/products" enctype="multipart/form-data" id="product-form">
                     @csrf
@@ -183,13 +242,13 @@
                         <textarea name="variants_text" id="f-variants" rows="3" class="form-control form-control-sm font-monospace" placeholder="RAM 8GB / SSD 256GB | 5899000 | 6499000&#10;RAM 16GB / SSD 512GB | 6899000 | 7499000" required></textarea>
                     </div>
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success fw-semibold btn-sm px-4 py-2">Simpan Produk</button>
-                        <button type="reset" class="btn btn-outline-secondary btn-sm">Reset Form</button>
+                        <button type="submit" class="btn btn-success btn-sm px-4 py-2">Simpan Produk</button>
+                        <button type="reset" class="btn btn-light btn-sm">Reset Form</button>
                     </div>
                 </form>
             </div>
 
-            <div class="card border-0 shadow-sm rounded-4 p-4">
+            <div class="brutal-card p-4">
                 <h2 class="h5 fw-bold mb-3">4. Daftar Produk Aktif ({{ count($catalog['products']) }})</h2>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle">
@@ -213,11 +272,11 @@
                                         <div class="fw-semibold">{{ $p['name'] }}</div>
                                         <small class="text-secondary">{{ $p['brand'] }} • <code>{{ $p['id'] }}</code> ({{ count($p['images'] ?? [$p['image']]) }} foto)</small>
                                     </td>
-                                    <td><span class="badge text-bg-light border">{{ $p['category'] }}</span></td>
+                                    <td><span class="badge text-bg-light border border-dark rounded-0">{{ $p['category'] }}</span></td>
                                     <td><small>{{ count($p['variants']) }} varian</small></td>
                                     <td class="text-end">
                                         <div class="d-inline-flex gap-1">
-                                            <button type="button" class="btn btn-outline-primary btn-sm edit-btn"
+                                            <button type="button" class="btn btn-primary btn-sm edit-btn"
                                                     data-id="{{ $p['id'] }}"
                                                     data-name="{{ $p['name'] }}"
                                                     data-brand="{{ $p['brand'] }}"
@@ -231,7 +290,7 @@
                                             <form method="POST" action="/admin/products/{{ $p['id'] }}" onsubmit="return confirm('Hapus produk ini?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-outline-danger btn-sm">Hapus</button>
+                                                <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
                                             </form>
                                         </div>
                                     </td>
@@ -263,7 +322,7 @@ document.getElementById('f-photos')?.addEventListener('change', (e) => {
     Array.from(e.target.files || []).forEach((file) => {
         const img = document.createElement('img');
         img.src = URL.createObjectURL(file);
-        img.style.cssText = 'width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1;';
+        img.style.cssText = 'width:56px;height:56px;object-fit:cover;border:2px solid #111111;';
         preview.appendChild(img);
     });
 });
