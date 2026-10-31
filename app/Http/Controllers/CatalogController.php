@@ -84,7 +84,7 @@ class CatalogController extends Controller
 
     public function loginForm()
     {
-        return view('admin.login');
+        return view('admin.login', ['catalog' => $this->loadCatalog()]);
     }
 
     public function login(Request $request)

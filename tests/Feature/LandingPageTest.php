@@ -36,6 +36,8 @@ class LandingPageTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Java Computer Seller');
         $response->assertSee('bootstrap@5.3.3/dist/css/bootstrap.min.css', false);
+        $response->assertSee('rel="icon"', false);
+        $response->assertSee('/favicon.svg');
         $response->assertSee('https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8');
         $response->assertSee('-7.3425692,108.1080775');
 
