@@ -695,8 +695,30 @@
                             </div>
                         </div>
                         <!-- Map Component -->
-                        <div class="w-full h-56 bg-cover bg-center border-[2.5px] border-canvas-border shadow-[3px_3px_0px_#111111]"
-                             style="background-image: url('{{ $catalog['map_image'] ?? 'https://lh3.googleusercontent.com/aida-public/AB6AXuDPNB2_D1TQz7yjgMbCMOKcfbTf2XJXZojx1FukCo98HnwKO6FF7jmWG4ha7k-YBwhJlEInTMwIFnT5QwI2oXl2_DrSt2b_3NTdtXrgN7zlZGEFvrkHnDZQEeFlgSYpVWWhlmfrUCRHb5q4RvtwyjGg5nn6OplleQnRANuufJWwar-qtAXz-LrX0r3buIF_ITvWTEpmbn8k4HNLkSNs50fKvfjx--Knw-VhxkEDyXA' }}')"></div>
+                        @php
+                            $mapSrc = $catalog['map_image'] ?? 'https://maps.google.com/maps?q=-7.3696938,108.1764225&hl=id&z=17&output=embed';
+                            $mapLink = $catalog['map_link'] ?? 'https://maps.app.goo.gl/YGa9azM7gmrinEbm8';
+                            $isIframe = str_contains($mapSrc, 'maps.google.com') || str_contains($mapSrc, 'output=embed');
+                        @endphp
+                        <div class="relative w-full h-60 border-[2.5px] border-canvas-border shadow-[3px_3px_0px_#111111] overflow-hidden bg-canvas-cream">
+                            @if ($isIframe)
+                                <iframe src="{{ $mapSrc }}"
+                                        class="w-full h-full border-0"
+                                        loading="lazy"
+                                        allowfullscreen
+                                        referrerpolicy="no-referrer-when-downgrade"
+                                        title="Lokasi Toko"></iframe>
+                            @else
+                                <div class="w-full h-full bg-cover bg-center" style="background-image: url('{{ $mapSrc }}');"></div>
+                            @endif
+                            <a href="{{ $mapLink }}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="absolute bottom-2 right-2 px-2.5 py-1.5 bg-wood-ochre-light text-slate-charcoal font-label-code text-label-code font-bold uppercase border-2 border-canvas-border shadow-[2px_2px_0px_#111111] hover:bg-white transition-colors flex items-center gap-1.5 z-10">
+                                <span class="material-symbols-outlined text-[16px]">location_on</span>
+                                <span>Buka Google Maps</span>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- FAQ Accordion -->

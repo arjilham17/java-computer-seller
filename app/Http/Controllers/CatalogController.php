@@ -34,6 +34,7 @@ class CatalogController extends Controller
                 $decoded['contact_title'] = $decoded['contact_title'] ?? ($default['contact_title'] ?? 'KUNJUNGI TOKO FISIK');
                 $decoded['contact_subtitle'] = $decoded['contact_subtitle'] ?? ($default['contact_subtitle'] ?? 'Mau cek fisik barang sebelum beli atau konsultasi spek langsung ke teknisi kami? Silakan mampir ke workshop kami.');
                 $decoded['map_image'] = $decoded['map_image'] ?? ($default['map_image'] ?? '');
+                $decoded['map_link'] = $decoded['map_link'] ?? ($default['map_link'] ?? 'https://maps.app.goo.gl/YGa9azM7gmrinEbm8');
                 $decoded['faqs'] = $decoded['faqs'] ?? ($default['faqs'] ?? []);
                 return $decoded;
             }
@@ -112,6 +113,7 @@ class CatalogController extends Controller
             'contact_title' => 'nullable|string|max:150',
             'contact_subtitle' => 'nullable|string|max:500',
             'map_image' => 'nullable|string|max:1000',
+            'map_link' => 'nullable|string|max:1000',
             'faq_text' => 'nullable|string|max:4000',
         ]);
 
@@ -172,6 +174,9 @@ class CatalogController extends Controller
         }
         if (array_key_exists('map_image', $data) && $data['map_image'] !== null) {
             $catalog['map_image'] = $data['map_image'];
+        }
+        if (array_key_exists('map_link', $data) && $data['map_link'] !== null) {
+            $catalog['map_link'] = $data['map_link'];
         }
         if (array_key_exists('faq_text', $data) && $data['faq_text'] !== null) {
             $faqs = [];

@@ -206,8 +206,12 @@
                         <textarea name="contact_subtitle" rows="2" class="form-control form-control-sm">{{ $catalog['contact_subtitle'] ?? '' }}</textarea>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">URL Gambar Preview Peta Toko</label>
-                        <input type="text" name="map_image" class="form-control form-control-sm" value="{{ $catalog['map_image'] ?? '' }}">
+                        <label class="form-label small fw-semibold">URL Peta / Embed Google Maps</label>
+                        <input type="text" name="map_image" class="form-control form-control-sm" value="{{ $catalog['map_image'] ?? '' }}" placeholder="https://maps.google.com/maps?... atau URL gambar">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Link Tautan Google Maps</label>
+                        <input type="text" name="map_link" class="form-control form-control-sm" value="{{ $catalog['map_link'] ?? 'https://maps.app.goo.gl/YGa9azM7gmrinEbm8' }}" placeholder="https://maps.app.goo.gl/...">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">Daftar FAQ (1 baris per pertanyaan: <code>Pertanyaan | Jawaban</code>)</label>

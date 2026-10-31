@@ -36,6 +36,8 @@ class LandingPageTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Java Computer Seller');
         $response->assertSee('bootstrap@5.3.3/dist/css/bootstrap.min.css', false);
+        $response->assertSee('https://maps.app.goo.gl/YGa9azM7gmrinEbm8');
+        $response->assertSee('-7.3696938,108.1764225');
 
         foreach (['Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'] as $category) {
             $response->assertSee($category);
@@ -230,6 +232,7 @@ class LandingPageTest extends TestCase
             'contact_title' => 'KUNJUNGI SHOWROOM KAMI',
             'contact_subtitle' => 'Silakan datang langsung untuk konsultasi hardware dan benchmark.',
             'map_image' => 'https://example.com/custom-map.png',
+            'map_link' => 'https://maps.app.goo.gl/custom-location',
             'faq_text' => "Apakah bisa rakit langsung di tempat? | Ya, teknisi kami dapat merakit di depan Anda langsung.\nApakah ada garansi toko? | Ya, ada garansi tukar baru 7 hari pertama.",
         ];
 
@@ -248,6 +251,7 @@ class LandingPageTest extends TestCase
         $home->assertSee('Silakan datang langsung untuk konsultasi hardware dan benchmark.');
         $home->assertSee('Jl. Kaliurang KM 5 No. 12, Sleman');
         $home->assertSee('https://example.com/custom-map.png');
+        $home->assertSee('https://maps.app.goo.gl/custom-location');
         $home->assertSee('Apakah bisa rakit langsung di tempat?');
         $home->assertSee('Ya, teknisi kami dapat merakit di depan Anda langsung.');
     }
