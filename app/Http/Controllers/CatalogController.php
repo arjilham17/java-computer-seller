@@ -20,6 +20,34 @@ class CatalogController extends Controller
         'variants_text' => 'required|string|max:2000',
         'is_sold_out' => 'nullable|boolean',
     ];
+
+    private function productRules(): array
+    {
+        $rules = self::PRODUCT_RULES;
+        if (!extension_loaded('fileinfo')) {
+            $rules['photos.*'] = ['nullable', 'file', 'max:4096', function ($attr, $file, $fail) {
+                $ext = strtolower($file->getClientOriginalExtension());
+                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                    $fail('Format file harus berupa jpg, jpeg, png, atau webp.');
+                }
+            }];
+        }
+        return $rules;
+    }
+
+    private function logoRule(): array|string
+    {
+        if (extension_loaded('fileinfo')) {
+            return 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048';
+        }
+
+        return ['nullable', 'file', 'max:2048', function ($attr, $file, $fail) {
+            $ext = strtolower($file->getClientOriginalExtension());
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                $fail('Format logo harus berupa jpg, jpeg, png, atau webp.');
+            }
+        }];
+    }
     // shortcut: single-file JSON store in storage/app/catalog.json, upgrade to relational tables when concurrent multi-admin edits or >200 SKUs are needed
     private function loadCatalog(): array
     {
@@ -105,7 +133,7 @@ class CatalogController extends Controller
             'hero_original_price' => 'required|integer|min:1',
             'hero_promo_price' => 'required|integer|min:1|lte:hero_original_price',
             'hero_bonus' => 'required|string|max:180',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'logo' => $this->logoRule(),
             'remove_logo' => 'nullable|boolean',
             'about_title' => 'nullable|string|max:150',
             'about_subtitle' => 'nullable|string|max:500',
@@ -294,7 +322,7 @@ class CatalogController extends Controller
             return redirect('/admin/login');
         }
 
-        $data = $request->validate(self::PRODUCT_RULES);
+        $data = $request->validate($this->productRules());
         $files = $request->file('photos', []);
         $product = $this->buildProduct($data, is_array($files) ? $files : [$files]);
 
