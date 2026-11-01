@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&amp;family=Space+Grotesk:wght@600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <!-- Bootstrap 5.3.3 for Carousel & base utilities -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
@@ -518,6 +517,13 @@
                     @endforeach
                 </div>
 
+                <!-- Empty Search State -->
+                <div id="catalog-empty-state" class="hidden text-center py-12 px-4 bg-surface-container-lowest border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] my-6">
+                    <span class="material-symbols-outlined text-4xl text-wood-ochre-dark mb-2">search_off</span>
+                    <h3 class="font-headline-sm text-body-lg font-bold uppercase text-slate-charcoal mb-1">Produk Tidak Ditemukan</h3>
+                    <p class="font-body-sm text-surface-variant max-w-md mx-auto">Tidak ada produk yang cocok dengan kata kunci atau filter kategori yang dipilih.</p>
+                </div>
+
                 <!-- Real-time Order Preview Box (PRD 4.4 Clarity) -->
                 <div class="p-4 bg-slate-charcoal text-surface border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
@@ -890,12 +896,19 @@
 
     function applyFilter() {
         const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        let visibleCount = 0;
         productCards.forEach((card) => {
             const cardCat = card.getAttribute('data-category');
             const matchCat = activeCat === 'Semua' || cardCat === activeCat;
             const matchQuery = !query || card.textContent.toLowerCase().includes(query);
-            card.style.display = (matchCat && matchQuery) ? 'flex' : 'none';
+            const isVisible = matchCat && matchQuery;
+            card.style.display = isVisible ? 'flex' : 'none';
+            if (isVisible) visibleCount++;
         });
+        const emptyState = document.getElementById('catalog-empty-state');
+        if (emptyState) {
+            emptyState.classList.toggle('hidden', visibleCount > 0);
+        }
     }
 
     filterBtns.forEach((btn) => {

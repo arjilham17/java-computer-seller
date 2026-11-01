@@ -40,6 +40,8 @@ class LandingPageTest extends TestCase
         $response->assertSee('/favicon.svg');
         $response->assertSee('https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8');
         $response->assertSee('-7.3425692,108.1080775');
+        $response->assertSee('catalog-empty-state');
+        $response->assertSee('Produk Tidak Ditemukan');
 
         foreach (['Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'] as $category) {
             $response->assertSee($category);
@@ -280,5 +282,83 @@ class LandingPageTest extends TestCase
         $homeAgain = $this->get('/');
         $homeAgain->assertStatus(200);
         $homeAgain->assertSee('UNIT READY STOCK');
+    }
+
+    public function test_admin_can_download_backup_json(): void
+    {
+        $this->get('/admin/backup')->assertRedirect('/admin/login');
+
+        $this->post('/admin/login', ['password' => env('ADMIN_PASSWORD')]);
+
+        $response = $this->get('/admin/backup');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('application/json', (string) $response->headers->get('content-type'));
+        $this->assertStringContainsString('catalog-backup-', (string) $response->headers->get('content-disposition'));
+
+        $data = json_decode($response->getContent(), true);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('store_name', $data);
+        $this->assertArrayHasKey('products', $data);
+    }
+
+    public function test_admin_deleting_product_and_changing_logo_cleans_orphaned_files(): void
+    {
+        $this->post('/admin/login', ['password' => env('ADMIN_PASSWORD')]);
+
+        // Test orphaned product image deletion
+        $testUploadDir = public_path('uploads/products');
+        @mkdir($testUploadDir, 0775, true);
+        $testImageName = 'test-orphan-' . uniqid() . '.jpg';
+        $testImagePath = $testUploadDir . '/' . $testImageName;
+        file_put_contents($testImagePath, 'fake-image-bytes');
+        $this->assertFileExists($testImagePath);
+
+        // Save a test product referencing this uploaded image
+        $this->post('/admin/products', [
+            'id' => 'test-orphan-product',
+            'name' => 'Produk Orphan Test',
+            'brand' => 'TestBrand',
+            'category' => 'Aksesoris',
+            'badge' => 'Test',
+            'image' => '/uploads/products/' . $testImageName,
+            'specs_text' => 'Spec A;Spec B',
+            'variants_text' => 'Varian 1 | 50000 | 60000',
+        ])->assertRedirect('/admin');
+
+        // Delete the product
+        $this->delete('/admin/products/test-orphan-product')->assertRedirect('/admin');
+        $this->assertFileDoesNotExist($testImagePath);
+
+        // Test orphaned logo deletion when removed
+        $logoDir = public_path('uploads/logo');
+        @mkdir($logoDir, 0775, true);
+        $testLogoName = 'logo-orphan-' . uniqid() . '.png';
+        $testLogoPath = $logoDir . '/' . $testLogoName;
+        file_put_contents($testLogoPath, 'fake-logo-bytes');
+        $this->assertFileExists($testLogoPath);
+
+        // Force set catalog logo to this test file
+        $catalogPath = storage_path('app/catalog.json');
+        $catalog = json_decode(file_get_contents($catalogPath), true);
+        $catalog['logo'] = '/uploads/logo/' . $testLogoName;
+        file_put_contents($catalogPath, json_encode($catalog));
+
+        // Remove logo via admin settings
+        $settingsData = [
+            'store_name' => $catalog['store_name'],
+            'tagline' => $catalog['tagline'],
+            'whatsapp_number' => $catalog['whatsapp_number'],
+            'address' => $catalog['address'],
+            'hours' => $catalog['hours'],
+            'hero_badge' => 'PROMO SPESIAL',
+            'hero_title' => 'ASUS ROG Strix G16',
+            'hero_subtitle' => 'Core i7 • RTX 4060 • 16GB RAM',
+            'hero_original_price' => 22999000,
+            'hero_promo_price' => 20999000,
+            'hero_bonus' => 'Gratis Mouse Gaming',
+            'remove_logo' => 1,
+        ];
+        $this->post('/admin/settings', $settingsData)->assertRedirect('/admin');
+        $this->assertFileDoesNotExist($testLogoPath);
     }
 }

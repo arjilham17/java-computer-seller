@@ -97,6 +97,7 @@ class CatalogController extends Controller
             return redirect('/admin/login')->withErrors(['password' => 'Password admin tidak sesuai.']);
         }
 
+        $request->session()->regenerate();
         $request->session()->put('admin_authenticated', true);
         return redirect('/admin');
     }
@@ -104,23 +105,29 @@ class CatalogController extends Controller
     public function logout(Request $request)
     {
         $request->session()->forget('admin_authenticated');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return redirect('/admin/login');
     }
 
     public function admin()
     {
-        if (!session('admin_authenticated')) {
-            return redirect('/admin/login');
-        }
         return view('admin.dashboard', ['catalog' => $this->loadCatalog()]);
+    }
+
+    public function backupCatalog()
+    {
+        $catalog = $this->loadCatalog();
+        $json = json_encode($catalog, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $filename = 'catalog-backup-' . date('Y-m-d') . '.json';
+        return response($json, 200, [
+            'Content-Type' => 'application/json',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     public function updateSettings(Request $request)
     {
-        if (!session('admin_authenticated')) {
-            return redirect('/admin/login');
-        }
-
         $data = $request->validate([
             'store_name' => 'required|string|max:120',
             'tagline' => 'required|string|max:200',
@@ -146,13 +153,20 @@ class CatalogController extends Controller
         ]);
 
         $catalog = $this->loadCatalog();
+        $oldLogo = $catalog['logo'] ?? null;
         if ($request->hasFile('logo')) {
+            if ($oldLogo && str_starts_with($oldLogo, '/uploads/logo/')) {
+                @unlink(public_path(ltrim($oldLogo, '/')));
+            }
             $dir = public_path('uploads/logo');
             @mkdir($dir, 0775, true);
             $name = 'logo-' . uniqid() . '.' . strtolower($request->file('logo')->getClientOriginalExtension());
             $request->file('logo')->move($dir, $name);
             $catalog['logo'] = '/uploads/logo/' . $name;
         } elseif ($request->boolean('remove_logo')) {
+            if ($oldLogo && str_starts_with($oldLogo, '/uploads/logo/')) {
+                @unlink(public_path(ltrim($oldLogo, '/')));
+            }
             unset($catalog['logo']);
         }
         $catalog['store_name'] = $data['store_name'];
@@ -318,10 +332,6 @@ class CatalogController extends Controller
 
     public function saveProduct(Request $request)
     {
-        if (!session('admin_authenticated')) {
-            return redirect('/admin/login');
-        }
-
         $data = $request->validate($this->productRules());
         $files = $request->file('photos', []);
         $product = $this->buildProduct($data, is_array($files) ? $files : [$files]);
@@ -339,10 +349,6 @@ class CatalogController extends Controller
 
     public function downloadTemplate()
     {
-        if (!session('admin_authenticated')) {
-            return redirect('/admin/login');
-        }
-
         $rows = [
             ['id', 'name', 'brand', 'category', 'badge', 'image', 'specs_text', 'variants_text'],
             [
@@ -385,10 +391,6 @@ class CatalogController extends Controller
     // shortcut: parses CSV via stdlib fgetcsv (with browser SheetJS converting .xlsx to CSV on select), upgrade to server-side zip XML parser if headless .xlsx API uploads are needed
     public function importProducts(Request $request)
     {
-        if (!session('admin_authenticated')) {
-            return redirect('/admin/login');
-        }
-
         $raw = (string) $request->input('csv_payload', '');
         if ($raw === '' && $request->hasFile('file')) {
             $raw = (string) file_get_contents($request->file('file')->getRealPath());
@@ -421,7 +423,7 @@ class CatalogController extends Controller
                 continue;
             }
             $assoc = array_combine($expected, array_pad(array_slice(array_map('trim', $row), 0, 8), 8, ''));
-            $validator = Validator::make($assoc, self::PRODUCT_RULES);
+            $validator = Validator::make($assoc, $this->productRules());
             if ($validator->fails()) {
                 fclose($fh);
                 return redirect('/admin')->withErrors(['import' => "Baris {$lineNum}: " . $validator->errors()->first()]);
@@ -450,10 +452,6 @@ class CatalogController extends Controller
 
     public function toggleSoldOut(string $id)
     {
-        if (!session('admin_authenticated')) {
-            return redirect('/admin/login');
-        }
-
         $catalog = $this->loadCatalog();
         $updated = false;
         foreach ($catalog['products'] as &$product) {
@@ -474,11 +472,22 @@ class CatalogController extends Controller
 
     public function deleteProduct(string $id)
     {
-        if (!session('admin_authenticated')) {
-            return redirect('/admin/login');
+        $catalog = $this->loadCatalog();
+        $productToDelete = null;
+        foreach ($catalog['products'] as $p) {
+            if ($p['id'] === $id) {
+                $productToDelete = $p;
+                break;
+            }
+        }
+        if ($productToDelete && !empty($productToDelete['images'])) {
+            foreach ($productToDelete['images'] as $img) {
+                if (str_starts_with($img, '/uploads/products/')) {
+                    @unlink(public_path(ltrim($img, '/')));
+                }
+            }
         }
 
-        $catalog = $this->loadCatalog();
         $catalog['products'] = array_values(array_filter(
             $catalog['products'],
             fn (array $p) => $p['id'] !== $id

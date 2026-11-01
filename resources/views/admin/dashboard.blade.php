@@ -73,6 +73,7 @@
     <div class="container d-flex justify-content-between align-items-center">
         <div class="fw-bold font-headline fs-5">Dashboard Admin — {{ $catalog['store_name'] }}</div>
         <div class="d-flex gap-2">
+            <a href="/admin/backup" class="btn btn-light btn-sm" title="Download backup data katalog JSON">Backup JSON</a>
             <a href="/" target="_blank" class="btn btn-primary btn-sm">Lihat Landing Page</a>
             <form method="POST" action="/admin/logout" class="m-0">
                 @csrf
