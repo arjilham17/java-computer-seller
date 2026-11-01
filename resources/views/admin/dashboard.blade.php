@@ -141,6 +141,19 @@
                         <input type="text" name="hours" class="form-control form-control-sm" value="{{ $catalog['hours'] }}" required>
                     </div>
 
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Instagram URL</label>
+                        <input type="url" name="instagram_url" class="form-control form-control-sm" placeholder="https://instagram.com/namatoko" value="{{ $catalog['instagram_url'] ?? '' }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">TikTok URL</label>
+                        <input type="url" name="tiktok_url" class="form-control form-control-sm" placeholder="https://tiktok.com/@namatoko" value="{{ $catalog['tiktok_url'] ?? '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Facebook URL</label>
+                        <input type="url" name="facebook_url" class="form-control form-control-sm" placeholder="https://facebook.com/namatoko" value="{{ $catalog['facebook_url'] ?? '' }}">
+                    </div>
+
                     <hr class="border-2 border-dark opacity-100">
                     <h3 class="h6 fw-bold mb-2">Kartu Hero Flash Deal</h3>
                     <div class="mb-2">

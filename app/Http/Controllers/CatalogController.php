@@ -64,6 +64,9 @@ class CatalogController extends Controller
                 $decoded['map_image'] = $decoded['map_image'] ?? ($default['map_image'] ?? '');
                 $decoded['map_link'] = $decoded['map_link'] ?? ($default['map_link'] ?? 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8');
                 $decoded['faqs'] = $decoded['faqs'] ?? ($default['faqs'] ?? []);
+                $decoded['instagram_url'] = $decoded['instagram_url'] ?? ($default['instagram_url'] ?? '');
+                $decoded['tiktok_url'] = $decoded['tiktok_url'] ?? ($default['tiktok_url'] ?? '');
+                $decoded['facebook_url'] = $decoded['facebook_url'] ?? ($default['facebook_url'] ?? '');
                 return $decoded;
             }
         }
@@ -150,6 +153,9 @@ class CatalogController extends Controller
             'map_image' => 'nullable|string|max:1000',
             'map_link' => 'nullable|string|max:1000',
             'faq_text' => 'nullable|string|max:4000',
+            'instagram_url' => 'nullable|url|max:255',
+            'tiktok_url' => 'nullable|url|max:255',
+            'facebook_url' => 'nullable|url|max:255',
         ]);
 
         $catalog = $this->loadCatalog();
@@ -174,6 +180,9 @@ class CatalogController extends Controller
         $catalog['whatsapp_number'] = $data['whatsapp_number'];
         $catalog['address'] = $data['address'];
         $catalog['hours'] = $data['hours'];
+        $catalog['instagram_url'] = $data['instagram_url'] ?? '';
+        $catalog['tiktok_url'] = $data['tiktok_url'] ?? '';
+        $catalog['facebook_url'] = $data['facebook_url'] ?? '';
         $catalog['hero_deal'] = [
             'badge' => $data['hero_badge'],
             'title' => $data['hero_title'],

@@ -87,6 +87,9 @@ class LandingPageTest extends TestCase
             'whatsapp_number' => '6281122334455',
             'address' => 'Jl. Merdeka No. 10',
             'hours' => '08.00 - 21.00 WIB',
+            'instagram_url' => 'https://instagram.com/javacomp.id',
+            'tiktok_url' => 'https://tiktok.com/@javacomp.id',
+            'facebook_url' => 'https://facebook.com/javacomp.id',
             'hero_badge' => 'PROMO SPESIAL',
             'hero_title' => 'ASUS ROG Strix G16',
             'hero_subtitle' => 'Core i7 • RTX 4060 • 16GB RAM',
@@ -112,6 +115,9 @@ class LandingPageTest extends TestCase
         $home->assertSee('ASUS ROG Strix G16');
         $home->assertSee('Samsung Essential Monitor S3');
         $home->assertSee('https://wa.me/6281122334455', false);
+        $home->assertSee('https://instagram.com/javacomp.id');
+        $home->assertSee('https://tiktok.com/@javacomp.id');
+        $home->assertSee('https://facebook.com/javacomp.id');
 
         $this->delete('/admin/products/monitor-samsung-24')->assertRedirect('/admin');
         $this->get('/')->assertDontSee('Samsung Essential Monitor S3');

@@ -6,6 +6,9 @@ return [
     'whatsapp_number' => env('STORE_WHATSAPP', '6281234567890'),
     'address' => 'Jl. Raya Utama, Indonesia (Siap Kirim & Ambil di Toko)',
     'hours' => 'Senin – Sabtu, 09.00 – 20.00 WIB',
+    'instagram_url' => 'https://instagram.com/javacomputer',
+    'tiktok_url' => 'https://tiktok.com/@javacomputer',
+    'facebook_url' => 'https://facebook.com/javacomputer',
 
     'hero_deal' => [
         'badge' => 'FLASH DEAL • STOK TERBATAS MINGGU INI',
