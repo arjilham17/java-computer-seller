@@ -15,7 +15,7 @@ class CatalogController extends Controller
         'badge' => 'required|string|max:80',
         'image' => 'nullable|string|max:2000',
         'photos' => 'nullable|array|max:10',
-        'photos.*' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+        'photos.*' => 'image|mimes:jpg,jpeg,png,webp|max:12288',
         'specs_text' => 'required|string|max:1000',
         'variants_text' => 'required|string|max:2000',
         'is_sold_out' => 'nullable|boolean',
@@ -25,7 +25,7 @@ class CatalogController extends Controller
     {
         $rules = self::PRODUCT_RULES;
         if (!extension_loaded('fileinfo')) {
-            $rules['photos.*'] = ['nullable', 'file', 'max:4096', function ($attr, $file, $fail) {
+            $rules['photos.*'] = ['nullable', 'file', 'max:12288', function ($attr, $file, $fail) {
                 $ext = strtolower($file->getClientOriginalExtension());
                 if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
                     $fail('Format file harus berupa jpg, jpeg, png, atau webp.');
@@ -251,6 +251,47 @@ class CatalogController extends Controller
         return redirect('/admin')->with('status', 'Pengaturan toko, hero deal, tentang kami & kontak berhasil diperbarui.');
     }
 
+    // shortcut: compresses server-side if GD is present; client-side canvas handles compression before upload when GD is absent
+    private function compressImageIfNeeded(string $path, int $maxBytes = 4194304): void
+    {
+        if (!extension_loaded('gd') || !file_exists($path) || filesize($path) <= $maxBytes) {
+            return;
+        }
+
+        $info = @getimagesize($path);
+        if (!$info) {
+            return;
+        }
+
+        $src = match ($info['mime'] ?? '') {
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png' => @imagecreatefrompng($path),
+            'image/webp' => @imagecreatefromwebp($path),
+            default => null,
+        };
+
+        if (!$src) {
+            return;
+        }
+
+        $w = imagesx($src);
+        $h = imagesy($src);
+        $maxDim = 1920;
+
+        if ($w > $maxDim || $h > $maxDim) {
+            $ratio = min($maxDim / $w, $maxDim / $h);
+            $nw = max(1, (int) round($w * $ratio));
+            $nh = max(1, (int) round($h * $ratio));
+            $dst = imagecreatetruecolor($nw, $nh);
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+            imagedestroy($src);
+            $src = $dst;
+        }
+
+        @imagejpeg($src, $path, 80);
+        imagedestroy($src);
+    }
+
     // shortcut: stores uploaded product photos directly in public/uploads/products, upgrade to S3/object storage when deploying across multiple stateless app servers
     private function extractImages(array $data, array $uploadedFiles = []): array
     {
@@ -262,7 +303,9 @@ class CatalogController extends Controller
                 if ($file && $file->isValid()) {
                     $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
                     $name = $data['id'] . '-' . uniqid() . '.' . $ext;
+                    $targetPath = $dir . '/' . $name;
                     $file->move($dir, $name);
+                    $this->compressImageIfNeeded($targetPath);
                     $images[] = '/uploads/products/' . $name;
                 }
             }

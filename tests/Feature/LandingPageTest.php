@@ -367,4 +367,35 @@ class LandingPageTest extends TestCase
         $this->post('/admin/settings', $settingsData)->assertRedirect('/admin');
         $this->assertFileDoesNotExist($testLogoPath);
     }
+
+    public function test_admin_can_upload_photo_exceeding_4mb_and_dashboard_has_compression_script(): void
+    {
+        $this->post('/admin/login', [
+            'password' => env('ADMIN_PASSWORD'),
+        ])->assertRedirect('/admin');
+
+        $admin = $this->get('/admin');
+        $admin->assertSee('compressImageIfNeeded');
+        $admin->assertSee('Foto &gt; 4096 KB (4 MB) otomatis dikompres', false);
+
+        $tinyPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        $largePhoto = \Illuminate\Http\UploadedFile::fake()->createWithContent('foto-5mb.png', $tinyPng . str_repeat('0', 5000000));
+
+        $this->post('/admin/products', [
+            'id' => 'laptop-foto-besar',
+            'name' => 'Laptop Foto Besar',
+            'brand' => 'Lenovo',
+            'category' => 'Laptop',
+            'badge' => 'High Res',
+            'photos' => [$largePhoto],
+            'specs_text' => "Layar 4K\nRAM 32GB",
+            'variants_text' => "32GB / 1TB | 15000000 | 16500000",
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        $this->get('/')->assertSee('/uploads/products/laptop-foto-besar-', false);
+
+        foreach (glob(public_path('uploads/products/laptop-foto-besar-*')) ?: [] as $f) {
+            @unlink($f);
+        }
+    }
 }

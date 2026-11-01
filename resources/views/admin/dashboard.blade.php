@@ -296,6 +296,7 @@
                     <div class="mb-2">
                         <label class="form-label small fw-semibold">Upload Foto Produk (Bisa pilih lebih dari 1 foto)</label>
                         <input type="file" name="photos[]" id="f-photos" class="form-control form-control-sm" accept="image/*" multiple>
+                        <div class="form-text text-muted text-[11px] mt-1">Foto &gt; 4096 KB (4 MB) otomatis dikompres sebelum upload agar hemat bandwidth dan lancar.</div>
                         <div id="photo-preview" class="d-flex flex-wrap gap-2 mt-2"></div>
                     </div>
                     <div class="mb-2">
@@ -315,7 +316,7 @@
                         <label class="form-check-label small fw-semibold" for="f-sold-out">Tandai Sold Out (Stok Habis)</label>
                     </div>
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success btn-sm px-4 py-2">Simpan Produk</button>
+                        <button type="submit" id="btn-save-product" class="btn btn-success btn-sm px-4 py-2">Simpan Produk</button>
                         <button type="reset" class="btn btn-light btn-sm">Reset Form</button>
                     </div>
                 </form>
@@ -401,15 +402,99 @@ document.getElementById('bulk-file')?.addEventListener('change', async (e) => {
     }
 });
 
-document.getElementById('f-photos')?.addEventListener('change', (e) => {
-    const preview = document.getElementById('photo-preview');
-    preview.innerHTML = '';
-    Array.from(e.target.files || []).forEach((file) => {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.style.cssText = 'width:56px;height:56px;object-fit:cover;border:2px solid #111111;';
-        preview.appendChild(img);
+// shortcut: browser canvas compression skips animated GIF/RAW formats, upgrade to server worker if non-standard formats needed
+async function compressImageIfNeeded(file, maxBytes = 4096 * 1024) {
+    if (file.size <= maxBytes || !file.type.startsWith('image/')) {
+        return file;
+    }
+    return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            let { width, height } = img;
+            const maxDim = 1920;
+            if (width > maxDim || height > maxDim) {
+                const ratio = Math.min(maxDim / width, maxDim / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+                if (!blob) return resolve(file);
+                const newName = file.name.replace(/\.[^.]+$/, '.jpg');
+                resolve(new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() }));
+            }, 'image/jpeg', 0.82);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file);
+        };
+        img.src = url;
     });
+}
+
+const photoInput = document.getElementById('f-photos');
+const saveBtn = document.getElementById('btn-save-product');
+
+photoInput?.addEventListener('change', async (e) => {
+    const preview = document.getElementById('photo-preview');
+    const rawFiles = Array.from(e.target.files || []);
+    if (!rawFiles.length) {
+        preview.innerHTML = '';
+        return;
+    }
+
+    const hasLarge = rawFiles.some(f => f.size > 4096 * 1024);
+    if (hasLarge && saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Mengompres Foto (>4MB)...';
+    }
+
+    preview.innerHTML = '<span class="text-muted small">Memeriksa ukuran foto...</span>';
+
+    try {
+        const dt = new DataTransfer();
+        const items = [];
+        for (const file of rawFiles) {
+            const orig = file.size;
+            const processed = await compressImageIfNeeded(file);
+            dt.items.add(processed);
+            items.push({ file: processed, wasCompressed: orig > 4096 * 1024, origMb: (orig / (1024 * 1024)).toFixed(1) });
+        }
+        photoInput.files = dt.files;
+
+        preview.innerHTML = '';
+        items.forEach(({ file, wasCompressed, origMb }) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'border p-1 bg-white text-center';
+            wrap.style.width = '70px';
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.cssText = 'width:60px;height:60px;object-fit:cover;display:block;margin:0 auto;';
+
+            const cap = document.createElement('div');
+            cap.className = 'font-monospace text-[10px] text-muted mt-1';
+            const curMb = (file.size / (1024 * 1024)).toFixed(1) + 'M';
+            cap.textContent = wasCompressed ? `${origMb}M->${curMb}` : curMb;
+            if (wasCompressed) cap.className += ' text-success fw-bold';
+
+            wrap.appendChild(img);
+            wrap.appendChild(cap);
+            preview.appendChild(wrap);
+        });
+    } catch (err) {
+        console.error(err);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Simpan Produk';
+        }
+    }
 });
 
 document.querySelectorAll('.edit-btn').forEach((btn) => {
