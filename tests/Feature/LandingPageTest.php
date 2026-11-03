@@ -282,6 +282,10 @@ class LandingPageTest extends TestCase
         $home->assertSee('SOLD OUT');
         $home->assertSee('Sold Out (Tanya Restock)');
 
+        $renderedProducts = $home->viewData('catalog')['products'];
+        $this->assertTrue((bool) $renderedProducts[count($renderedProducts) - 1]['is_sold_out']);
+        $this->assertSame('laptop-lenovo-ideapad', $renderedProducts[count($renderedProducts) - 1]['id']);
+
         $this->post('/admin/products/laptop-lenovo-ideapad/toggle-sold')
             ->assertRedirect('/admin');
 
@@ -395,6 +399,86 @@ class LandingPageTest extends TestCase
         $this->get('/')->assertSee('/uploads/products/laptop-foto-besar-', false);
 
         foreach (glob(public_path('uploads/products/laptop-foto-besar-*')) ?: [] as $f) {
+            @unlink($f);
+        }
+    }
+
+    public function test_audit_fixes_merging_photos_renaming_slug_clearing_faqs_and_import_validation(): void
+    {
+        $this->withSession(['admin_authenticated' => true]);
+
+        // 1. Settings: clear FAQs and Features
+        $this->post('/admin/settings', [
+            'store_name' => 'Java Computer Test',
+            'tagline' => 'Tagline',
+            'whatsapp_number' => '6281111111111',
+            'address' => 'Tasikmalaya',
+            'hours' => '09.00 - 20.00',
+            'hero_badge' => 'Badge',
+            'hero_title' => 'Title',
+            'hero_subtitle' => 'Subtitle',
+            'hero_original_price' => 1000000,
+            'hero_promo_price' => 900000,
+            'hero_bonus' => 'Bonus',
+            'instagram_url' => '',
+            'tiktok_url' => '',
+            'facebook_url' => '',
+            'about_features_text' => '',
+            'faq_text' => '',
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        $catalog = json_decode(file_get_contents(storage_path('app/catalog.json')), true);
+        $this->assertSame([], $catalog['faqs']);
+        $this->assertSame([], $catalog['about_features']);
+
+        // 2. Product: merge existing URL with new uploaded photo
+        $tinyPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        $upload = \Illuminate\Http\UploadedFile::fake()->createWithContent('new-photo.png', $tinyPng);
+        $existingUrl = 'https://images.unsplash.com/photo-test-merged';
+
+        $this->post('/admin/products', [
+            'id' => 'laptop-merge-test',
+            'name' => 'Laptop Merge Test',
+            'brand' => 'Lenovo',
+            'category' => 'Laptop',
+            'badge' => 'Promo',
+            'image' => $existingUrl,
+            'photos' => [$upload],
+            'specs_text' => 'Specs',
+            'variants_text' => 'Standard | 5000000 | 6000000',
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        $catalog = json_decode(file_get_contents(storage_path('app/catalog.json')), true);
+        $saved = collect($catalog['products'])->firstWhere('id', 'laptop-merge-test');
+        $this->assertNotNull($saved);
+        $this->assertCount(2, $saved['images']);
+        $this->assertContains($existingUrl, $saved['images']);
+
+        // 3. Product: rename slug via original_id avoids duplicate
+        $this->post('/admin/products', [
+            'original_id' => 'laptop-merge-test',
+            'id' => 'laptop-renamed-slug',
+            'name' => 'Laptop Renamed Slug',
+            'brand' => 'Lenovo',
+            'category' => 'Laptop',
+            'badge' => 'Promo',
+            'image' => $existingUrl,
+            'specs_text' => 'Specs',
+            'variants_text' => 'Standard | 5000000 | 6000000',
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        $catalog = json_decode(file_get_contents(storage_path('app/catalog.json')), true);
+        $this->assertNull(collect($catalog['products'])->firstWhere('id', 'laptop-merge-test'));
+        $this->assertNotNull(collect($catalog['products'])->firstWhere('id', 'laptop-renamed-slug'));
+
+        // 4. Bulk import: reject invalid mime type
+        $invalidFile = \Illuminate\Http\UploadedFile::fake()->create('malicious.php', 100, 'application/x-php');
+        $this->post('/admin/products/import', [
+            'file' => $invalidFile,
+        ])->assertSessionHasErrors(['file']);
+
+        // Cleanup test images
+        foreach (glob(public_path('uploads/products/laptop-merge-test-*')) ?: [] as $f) {
             @unlink($f);
         }
     }

@@ -82,7 +82,9 @@ class CatalogController extends Controller
 
     public function index()
     {
-        return view('landing', ['catalog' => $this->loadCatalog()]);
+        $catalog = $this->loadCatalog();
+        usort($catalog['products'], fn (array $a, array $b): int => ((int) !empty($a['is_sold_out'])) <=> ((int) !empty($b['is_sold_out'])));
+        return view('landing', ['catalog' => $catalog]);
     }
 
     public function loginForm()
@@ -93,7 +95,7 @@ class CatalogController extends Controller
     public function login(Request $request)
     {
         $request->validate(['password' => 'required|string']);
-        $expected = (string) env('ADMIN_PASSWORD', '');
+        $expected = (string) config('catalog.admin_password', '');
 
         // No fallback password: empty ADMIN_PASSWORD must lock admin, not open it.
         if ($expected === '' || !hash_equals($expected, (string) $request->input('password'))) {
@@ -192,16 +194,16 @@ class CatalogController extends Controller
             'bonus' => $data['hero_bonus'],
         ];
 
-        if (array_key_exists('about_title', $data) && $data['about_title'] !== null) {
-            $catalog['about_title'] = $data['about_title'];
+        if (array_key_exists('about_title', $data)) {
+            $catalog['about_title'] = (string) ($data['about_title'] ?? '');
         }
-        if (array_key_exists('about_subtitle', $data) && $data['about_subtitle'] !== null) {
-            $catalog['about_subtitle'] = $data['about_subtitle'];
+        if (array_key_exists('about_subtitle', $data)) {
+            $catalog['about_subtitle'] = (string) ($data['about_subtitle'] ?? '');
         }
-        if (array_key_exists('about_features_text', $data) && $data['about_features_text'] !== null) {
+        if (array_key_exists('about_features_text', $data)) {
             $icons = ['verified_user', 'inventory', 'terminal', 'headset_mic', 'build', 'thumb_up'];
             $features = [];
-            foreach (preg_split('/\r\n|\r|\n/', (string) $data['about_features_text']) as $idx => $line) {
+            foreach (preg_split('/\r\n|\r|\n/', (string) ($data['about_features_text'] ?? '')) as $idx => $line) {
                 $line = trim($line);
                 if ($line === '') continue;
                 $parts = array_map('trim', explode('|', $line, 3));
@@ -213,25 +215,23 @@ class CatalogController extends Controller
                     ];
                 }
             }
-            if (!empty($features)) {
-                $catalog['about_features'] = $features;
-            }
+            $catalog['about_features'] = $features;
         }
-        if (array_key_exists('contact_title', $data) && $data['contact_title'] !== null) {
-            $catalog['contact_title'] = $data['contact_title'];
+        if (array_key_exists('contact_title', $data)) {
+            $catalog['contact_title'] = (string) ($data['contact_title'] ?? '');
         }
-        if (array_key_exists('contact_subtitle', $data) && $data['contact_subtitle'] !== null) {
-            $catalog['contact_subtitle'] = $data['contact_subtitle'];
+        if (array_key_exists('contact_subtitle', $data)) {
+            $catalog['contact_subtitle'] = (string) ($data['contact_subtitle'] ?? '');
         }
-        if (array_key_exists('map_image', $data) && $data['map_image'] !== null) {
-            $catalog['map_image'] = $data['map_image'];
+        if (array_key_exists('map_image', $data)) {
+            $catalog['map_image'] = (string) ($data['map_image'] ?? '');
         }
-        if (array_key_exists('map_link', $data) && $data['map_link'] !== null) {
-            $catalog['map_link'] = $data['map_link'];
+        if (array_key_exists('map_link', $data)) {
+            $catalog['map_link'] = (string) ($data['map_link'] ?? '');
         }
-        if (array_key_exists('faq_text', $data) && $data['faq_text'] !== null) {
+        if (array_key_exists('faq_text', $data)) {
             $faqs = [];
-            foreach (preg_split('/\r\n|\r|\n/', (string) $data['faq_text']) as $line) {
+            foreach (preg_split('/\r\n|\r|\n/', (string) ($data['faq_text'] ?? '')) as $line) {
                 $line = trim($line);
                 if ($line === '') continue;
                 $parts = array_map('trim', explode('|', $line, 2));
@@ -242,9 +242,7 @@ class CatalogController extends Controller
                     ];
                 }
             }
-            if (!empty($faqs)) {
-                $catalog['faqs'] = $faqs;
-            }
+            $catalog['faqs'] = $faqs;
         }
 
         $this->saveCatalog($catalog);
@@ -311,13 +309,10 @@ class CatalogController extends Controller
             }
         }
 
-        if (empty($images) && !empty($data['image'])) {
+        if (!empty($data['image'])) {
             foreach (preg_split('/\r\n|\r|\n|;/', (string) $data['image']) as $rawUrl) {
                 $url = trim($rawUrl);
-                if ($url === '') {
-                    continue;
-                }
-                if (filter_var($url, FILTER_VALIDATE_URL) || str_starts_with($url, '/uploads/products/')) {
+                if ($url !== '' && (filter_var($url, FILTER_VALIDATE_URL) || str_starts_with($url, '/uploads/products/'))) {
                     $images[] = $url;
                 }
             }
@@ -384,7 +379,9 @@ class CatalogController extends Controller
 
     public function saveProduct(Request $request)
     {
-        $data = $request->validate($this->productRules());
+        $rules = $this->productRules();
+        $rules['original_id'] = 'nullable|string|max:80';
+        $data = $request->validate($rules);
         $files = $request->file('photos', []);
         $product = $this->buildProduct($data, is_array($files) ? $files : [$files]);
 
@@ -393,6 +390,13 @@ class CatalogController extends Controller
         }
 
         $catalog = $this->loadCatalog();
+        $originalId = $data['original_id'] ?? null;
+        if (!empty($originalId) && $originalId !== $product['id']) {
+            $catalog['products'] = array_values(array_filter(
+                $catalog['products'],
+                fn (array $p) => $p['id'] !== $originalId
+            ));
+        }
         $this->upsertProduct($catalog, $product);
         $this->saveCatalog($catalog);
 
@@ -443,6 +447,11 @@ class CatalogController extends Controller
     // shortcut: parses CSV via stdlib fgetcsv (with browser SheetJS converting .xlsx to CSV on select), upgrade to server-side zip XML parser if headless .xlsx API uploads are needed
     public function importProducts(Request $request)
     {
+        $request->validate([
+            'file' => 'nullable|file|mimes:csv,txt,xlsx,xls|max:5120',
+            'csv_payload' => 'nullable|string|max:1000000',
+        ]);
+
         $raw = (string) $request->input('csv_payload', '');
         if ($raw === '' && $request->hasFile('file')) {
             $raw = (string) file_get_contents($request->file('file')->getRealPath());

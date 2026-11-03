@@ -265,6 +265,7 @@
                 <h2 class="h5 fw-bold mb-3">3. Tambah / Edit Produk Satuan</h2>
                 <form method="POST" action="/admin/products" enctype="multipart/form-data" id="product-form">
                     @csrf
+                    <input type="hidden" name="original_id" id="f-original-id">
                     <div class="row g-2 mb-2">
                         <div class="col-md-4">
                             <label class="form-label small fw-semibold">ID / Slug Produk</label>
@@ -499,6 +500,7 @@ photoInput?.addEventListener('change', async (e) => {
 
 document.querySelectorAll('.edit-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
+        document.getElementById('f-original-id').value = btn.dataset.id;
         document.getElementById('f-id').value = btn.dataset.id;
         document.getElementById('f-name').value = btn.dataset.name;
         document.getElementById('f-brand').value = btn.dataset.brand;

@@ -2,6 +2,7 @@
 
 return [
     'store_name' => 'Java Computer Seller',
+    'admin_password' => env('ADMIN_PASSWORD', ''),
     'tagline' => 'Pusat Laptop, PC Rakitan, Printer, Monitor & Aksesoris Bergaransi',
     'whatsapp_number' => env('STORE_WHATSAPP', '6281234567890'),
     'address' => 'Jl. Raya Utama, Indonesia (Siap Kirim & Ambil di Toko)',
