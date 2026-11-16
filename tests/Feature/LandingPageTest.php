@@ -500,6 +500,7 @@ class LandingPageTest extends TestCase
         $admin->assertSee('id="story-photo-select"', false);
         $admin->assertSee('id="btn-download-story"', false);
         $admin->assertSee('id="btn-copy-caption"', false);
+        $admin->assertSee('STORE_LOGO', false);
         $admin->assertSee('Generator Story Card Produk');
     }
 }

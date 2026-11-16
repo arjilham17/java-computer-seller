@@ -611,9 +611,21 @@ document.querySelectorAll('.edit-btn').forEach((btn) => {
 
 // Story Card Generator (9:16)
 const STORE_NAME = @json($catalog['store_name'] ?? 'Java Computer Seller');
+const STORE_LOGO = @json(!empty($catalog['logo']) ? $catalog['logo'] : null);
 const STORE_WA = @json($catalog['whatsapp_number'] ?? '6281234567890');
 const STORE_ADDRESS = @json($catalog['address'] ?? 'Jl. Raya Utama, Indonesia');
 const BASE_ORIGIN = window.location.origin;
+
+let storeLogoImg = null;
+if (STORE_LOGO) {
+    storeLogoImg = new Image();
+    storeLogoImg.onload = () => {
+        if (currentStoryProduct) {
+            renderStoryCanvas();
+        }
+    };
+    storeLogoImg.src = STORE_LOGO;
+}
 
 function formatRupiahStory(num) {
     return 'Rp ' + Math.round(Number(num) || 0).toLocaleString('id-ID');
@@ -695,17 +707,46 @@ function renderStoryCanvas() {
     ctx.strokeStyle = '#111111';
     ctx.strokeRect(60, 60, 948, 140);
 
-    // JC Badge
-    ctx.fillStyle = '#B87834';
-    ctx.fillRect(80, 80, 100, 100);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#111111';
-    ctx.strokeRect(80, 80, 100, 100);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = "bold 44px 'Space Grotesk', sans-serif";
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('JC', 130, 132);
+    // Logo Toko (Foto Upload atau Fallback Badge JC)
+    if (STORE_LOGO && (!storeLogoImg || !storeLogoImg.complete)) {
+        if (!storeLogoImg) {
+            storeLogoImg = new Image();
+            storeLogoImg.onload = () => {
+                if (currentStoryProduct) renderStoryCanvas();
+            };
+            storeLogoImg.src = STORE_LOGO;
+        }
+    }
+
+    if (storeLogoImg && storeLogoImg.complete && storeLogoImg.naturalWidth > 0) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(80, 80, 100, 100);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#111111';
+        ctx.strokeRect(80, 80, 100, 100);
+
+        const maxLogoW = 90;
+        const maxLogoH = 90;
+        const lw = storeLogoImg.naturalWidth;
+        const lh = storeLogoImg.naturalHeight;
+        const lScale = Math.min(maxLogoW / lw, maxLogoH / lh);
+        const lDrawW = lw * lScale;
+        const lDrawH = lh * lScale;
+        const lDrawX = 80 + (100 - lDrawW) / 2;
+        const lDrawY = 80 + (100 - lDrawH) / 2;
+        ctx.drawImage(storeLogoImg, lDrawX, lDrawY, lDrawW, lDrawH);
+    } else {
+        ctx.fillStyle = '#B87834';
+        ctx.fillRect(80, 80, 100, 100);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#111111';
+        ctx.strokeRect(80, 80, 100, 100);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = "bold 44px 'Space Grotesk', sans-serif";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('JC', 130, 132);
+    }
 
     // Store Name & Label
     ctx.textAlign = 'left';
