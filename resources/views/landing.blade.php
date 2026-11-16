@@ -411,7 +411,8 @@
                                 "Apakah stok promo ini masih tersedia?",
                             ]);
                         @endphp
-                        <div class="product-card flex flex-col bg-surface-container-lowest border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] {{ !empty($product['is_sold_out']) ? 'opacity-90' : '' }}"
+                        <div id="produk-{{ $product['id'] }}"
+                             class="product-card flex flex-col bg-surface-container-lowest border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] scroll-mt-24 {{ !empty($product['is_sold_out']) ? 'opacity-90' : '' }}"
                              data-brand="{{ $product['brand'] }}"
                              data-category="{{ $product['category'] }}"
                              data-title="{{ $product['name'] }}"

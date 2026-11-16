@@ -1,66 +1,119 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Java Computer Seller
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Landing page katalog hardware dan promo penjualan perangkat komputer (**Laptop, PC Desktop/Rakitan, Printer, Monitor, dan Aksesoris**) berbasis **Laravel 11** dengan alur konversi pesanan instan langsung ke **WhatsApp** (*zero-friction checkout*) dan dashboard admin terpadu.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. Halaman Publik (Landing Page)
+- **Hero Banner & Flash Deal:** Menampilkan promo unggulan mingguan lengkap dengan harga normal (coret), harga promo, badge penghematan, dan tombol klaim instan via WhatsApp.
+- **Katalog & Pemilih Varian Spesifikasi Dinamis:** 
+  - Filter kategori instan (`Semua`, `Laptop`, `PC`, `Printer`, `Monitor`, `Aksesoris`).
+  - Pencarian real-time berdasarkan nama produk, spesifikasi, atau merek.
+  - Pemilihan varian spesifikasi (contoh: RAM/SSD atau tipe printer) dan input jumlah unit (`qty`) yang langsung menghitung harga total dan memperbarui draf chat WhatsApp secara otomatis.
+- **Penanganan Status Sold Out:** Produk habis otomatis diturunkan ke urutan bawah katalog dengan badge khusus, dan tombol WhatsApp otomatis beralih menjadi format pesan "Tanya Restock".
+- **Galeri Multi-Foto:** Didukung carousel Bootstrap untuk melihat detail produk dari berbagai sudut.
+- **Informasi Toko Fisik & Workshop:** Jam operasional, alamat workshop, embed Google Maps responsif, tautan media sosial (Instagram, TikTok, Facebook), profil keunggulan, ulasan pelanggan, serta accordion FAQ.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. Panel Admin (`/admin`)
+- **Autentikasi Terproteksi:** Login admin berbasis sesi dengan proteksi CSRF, rate limiter (`throttle:10,1`), dan pencocokan kata sandi menggunakan `hash_equals`.
+- **Pengaturan Profil Toko & Hero Deal:** Ubah nama toko, tagline, nomor WhatsApp admin, alamat, jam buka, sosmed, hingga detail kartu Flash Deal.
+- **Pengelolaan Konten Statis:** Edit bagian profil keunggulan workshop, embed peta, dan daftar FAQ langsung dari dashboard.
+- **Manajemen Produk Satuan:** Tambah dan perbarui produk dengan upload multi-foto, kompresi gambar otomatis (client-side Canvas & server-side GD untuk file > 4MB), spesifikasi, dan daftar varian harga.
+- **Posting Massal (Excel / CSV):** Unduh template CSV/Excel, isi banyak produk sekaligus, dan unggah via SheetJS tanpa instalasi library backend yang berat.
+- **Generator Story Card Promosi (9:16):** Tombol *Story* pada setiap produk untuk merender poster promosi beresolusi 1080 × 1920 px (pilihan foto, varian harga, diskon hemat, spesifikasi, dan info toko), unduh PNG siap upload ke status WhatsApp / Instagram Story, dukungan *Web Share API* untuk perangkat HP, serta salin caption promosi otomatis dengan tautan langsung ke produk.
+- **Kontrol Cepat:** Tombol satu kali klik untuk toggle status *Sold Out* / *Ready Stock*.
+- **Pembersihan File Bersih:** Gambar fisik di `public/uploads/` otomatis dihapus saat produk atau logo dihapus/diubah untuk mencegah penumpukan file *orphan*.
+- **Backup Data Mandiri:** Fitur unduh snapshot katalog format `.json` sewaktu-waktu.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🛠️ Arsitektur & Teknologi
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Backend Framework:** Laravel 11 (PHP 8.2+)
+- **UI / Styling:** Bootstrap 5.3 & Tailwind CSS (Industrial Brutalist Hardware theme)
+- **Tipografi:** Space Grotesk, JetBrains Mono, Work Sans, Material Symbols
+- **Penyimpanan Data:** File-based JSON Store di `storage/app/catalog.json` (dengan fallback otomatis ke `config/catalog.php`) sesuai prinsip *Lean Architecture / YAGNI* tanpa dependensi database server eksternal.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 📦 Prasyarat Sistem
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **PHP:** Versi 8.2 atau lebih baru (ekstensi: `fileinfo`, `gd`, `json`, `mbstring`, `openssl`)
+- **Composer:** Dependency manager PHP
+- **Web Server:** Apache / Nginx / PHP Built-in Server (XAMPP didukung)
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## ⚙️ Panduan Instalasi & Menjalankan
 
-## Contributing
+1. **Clone repositori dan masuk ke direktori proyek:**
+   ```bash
+   git clone <URL_REPOSITORI>
+   cd java-computer-seller
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+2. **Pasang dependensi Composer:**
+   ```bash
+   composer install
+   ```
 
-## Code of Conduct
+3. **Salin file konfigurasi environment:**
+   ```bash
+   cp .env.example .env
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+4. **Generate application key:**
+   ```bash
+   php artisan key:generate
+   ```
 
-## Security Vulnerabilities
+5. **Konfigurasikan variabel penting di file `.env`:**
+   ```env
+   # Nomor WhatsApp Admin (format internasional tanpa '+', contoh: 6281234567890)
+   STORE_WHATSAPP=6281234567890
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+   # Password masuk Dashboard Admin (/admin/login)
+   ADMIN_PASSWORD=javacomputer123
+   ```
 
-## License
+6. **Jalankan server pengembangan:**
+   ```bash
+   php artisan serve
+   ```
+   Buka peramban di [http://localhost:8000](http://localhost:8000).
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 🔐 Akses Dashboard Admin
+
+- **URL Login:** `http://localhost:8000/admin/login`
+- **Password Default:** Nilai dari `ADMIN_PASSWORD` di file `.env` (default: `javacomputer123`).
+
+---
+
+## 🧪 Pengujian (Testing)
+
+Proyek ini dilengkapi dengan unit & feature tests lengkap menggunakan PHPUnit:
+
+```bash
+# Menjalankan seluruh pengujian otomatis
+php artisan test
+```
+
+Cakupan pengujian meliputi:
+- Render halaman publik, verifikasi komponen Bootstrap, dan seluruh kategori produk.
+- Validasi varian produk dan generator link WhatsApp.
+- Alur autentikasi dan otorisasi admin.
+- CRUD produk satuan, upload multi-foto, dan kompresi file > 4MB.
+- Impor massal template CSV/Excel.
+- Toggle status Sold Out dan urutan tampil produk.
+- Pembersihan file upload fisik saat data dihapus.
+- Download backup data katalog JSON.
+
+---
+
+## 📄 Lisensi
+
+Proyek ini bersifat open-source di bawah lisensi [MIT](LICENSE).

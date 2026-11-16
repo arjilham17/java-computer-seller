@@ -482,4 +482,24 @@ class LandingPageTest extends TestCase
             @unlink($f);
         }
     }
+
+    public function test_admin_dashboard_includes_story_card_generator_and_product_anchors(): void
+    {
+        $landing = $this->get('/');
+        $landing->assertStatus(200);
+        $landing->assertSee('id="produk-laptop-lenovo-ideapad"', false);
+        $landing->assertSee('scroll-mt-24', false);
+
+        $this->withSession(['admin_authenticated' => true]);
+        $admin = $this->get('/admin');
+        $admin->assertStatus(200);
+        $admin->assertSee('story-btn', false);
+        $admin->assertSee('id="storyModal"', false);
+        $admin->assertSee('id="story-canvas"', false);
+        $admin->assertSee('id="story-variant-select"', false);
+        $admin->assertSee('id="story-photo-select"', false);
+        $admin->assertSee('id="btn-download-story"', false);
+        $admin->assertSee('id="btn-copy-caption"', false);
+        $admin->assertSee('Generator Story Card Produk');
+    }
 }

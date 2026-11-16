@@ -66,6 +66,14 @@
             background-color: #16A34A;
             color: #ffffff;
         }
+        .btn-warning {
+            background-color: #E5AC67;
+            color: #1A1A1A;
+        }
+        .btn-warning:hover {
+            background-color: #B87834;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -356,6 +364,19 @@
                                     <td><small>{{ count($p['variants']) }} varian</small></td>
                                     <td class="text-end">
                                         <div class="d-inline-flex gap-1">
+                                            <button type="button" class="btn btn-warning btn-sm story-btn"
+                                                    data-id="{{ $p['id'] }}"
+                                                    data-name="{{ $p['name'] }}"
+                                                    data-brand="{{ $p['brand'] }}"
+                                                    data-category="{{ $p['category'] }}"
+                                                    data-badge="{{ $p['badge'] }}"
+                                                    data-image="{{ $imgList }}"
+                                                    data-specs="{{ $sLines }}"
+                                                    data-variants="{{ $vLines }}"
+                                                    data-sold-out="{{ !empty($p['is_sold_out']) ? '1' : '0' }}"
+                                                    title="Generate Card Promosi Story (9:16)">
+                                                Story
+                                            </button>
                                             <form method="POST" action="/admin/products/{{ $p['id'] }}/toggle-sold" class="m-0 d-inline">
                                                 @csrf
                                                 <button type="submit" class="btn btn-sm {{ !empty($p['is_sold_out']) ? 'btn-success' : 'btn-dark' }}" title="{{ !empty($p['is_sold_out']) ? 'Tandai Ready Stock' : 'Tandai Sold Out' }}">
@@ -391,6 +412,80 @@
     </div>
 </div>
 
+<!-- Modal Story Card Generator (9:16) -->
+<div class="modal fade" id="storyModal" tabindex="-1" aria-labelledby="storyModalLabel" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content brutal-card p-0 overflow-hidden">
+            <div class="modal-header border-bottom border-2 border-dark px-4 py-3" style="background-color: #F3ECE1;">
+                <div>
+                    <span class="badge border border-dark rounded-0 px-2 py-1 mb-1 font-monospace" style="background: #E5AC67; color: #111111;">STORY CARD 9:16</span>
+                    <h2 class="modal-title h5 fw-bold mb-0" id="storyModalLabel">Generator Story Card Produk</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup dialog"></button>
+            </div>
+            <div class="modal-body p-4" style="background-color: #FCF9F3;">
+                <div class="row g-4 align-items-start">
+                    <!-- Preview Canvas Column -->
+                    <div class="col-lg-5 text-center">
+                        <div class="p-3 bg-white border border-2 border-dark shadow-sm text-center">
+                            <canvas id="story-canvas" width="1080" height="1920" style="width: 100%; max-width: 320px; height: auto; border: 2.5px solid #111111; box-shadow: 4px 4px 0px #111111; display: block; margin: 0 auto; aspect-ratio: 9/16;" aria-label="Pratinjau kartu story produk"></canvas>
+                            <div id="story-loading" class="small text-secondary mt-2 d-none">
+                                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                Memproses gambar kartu...
+                            </div>
+                            <div id="story-cors-notice" class="alert alert-warning py-1 px-2 small mt-2 d-none rounded-0 border border-dark text-start">
+                                Foto produk eksternal dibatasi CORS oleh penyedia aslinya. Kartu tetap dirender rapi dengan ilustrasi fallback agar dapat diunduh tanpa kendala.
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Controls & Caption Column -->
+                    <div class="col-lg-7">
+                        <div class="brutal-card p-3 mb-3 bg-white">
+                            <h3 class="h6 fw-bold mb-3">Pengaturan Kartu</h3>
+                            <div class="mb-3">
+                                <label for="story-variant-select" class="form-label small fw-semibold">Pilih Varian Spesifikasi &amp; Harga:</label>
+                                <select id="story-variant-select" class="form-select form-select-sm"></select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="story-photo-select" class="form-label small fw-semibold">Pilih Foto Produk:</label>
+                                <select id="story-photo-select" class="form-select form-select-sm"></select>
+                            </div>
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="story-include-specs" checked>
+                                <label class="form-check-label small fw-semibold" for="story-include-specs">Tampilkan poin spesifikasi pada kartu</label>
+                            </div>
+                        </div>
+
+                        <div class="brutal-card p-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label for="story-caption-text" class="form-label small fw-semibold mb-0">Caption Siap Posting (WA Status / Instagram Story):</label>
+                                <span class="badge border border-dark rounded-0 font-monospace text-dark" style="background:#F3ECE1;">Format Teks</span>
+                            </div>
+                            <textarea id="story-caption-text" class="form-control form-control-sm font-monospace mb-3" rows="6" readonly></textarea>
+                            
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" id="btn-download-story" class="btn btn-primary btn-sm flex-grow-1 py-2">
+                                    Unduh Gambar Story (.PNG)
+                                </button>
+                                <button type="button" id="btn-share-story" class="btn btn-success btn-sm py-2 d-none">
+                                    Bagikan ke Aplikasi
+                                </button>
+                                <button type="button" id="btn-copy-caption" class="btn btn-light btn-sm py-2 px-3">
+                                    Salin Caption WA/IG
+                                </button>
+                            </div>
+                            <div id="story-copy-feedback" class="small text-success fw-bold mt-2 d-none" role="status">
+                                Caption berhasil disalin ke clipboard!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 document.getElementById('bulk-file')?.addEventListener('change', async (e) => {
@@ -512,6 +607,496 @@ document.querySelectorAll('.edit-btn').forEach((btn) => {
         document.getElementById('f-sold-out').checked = btn.dataset.soldOut === '1';
         document.getElementById('product-form').scrollIntoView({ behavior: 'smooth' });
     });
+});
+
+// Story Card Generator (9:16)
+const STORE_NAME = @json($catalog['store_name'] ?? 'Java Computer Seller');
+const STORE_WA = @json($catalog['whatsapp_number'] ?? '6281234567890');
+const STORE_ADDRESS = @json($catalog['address'] ?? 'Jl. Raya Utama, Indonesia');
+const BASE_ORIGIN = window.location.origin;
+
+function formatRupiahStory(num) {
+    return 'Rp ' + Math.round(Number(num) || 0).toLocaleString('id-ID');
+}
+
+let currentStoryProduct = null;
+let currentStoryRenderId = 0;
+
+const storyModalEl = document.getElementById('storyModal');
+const storyCanvas = document.getElementById('story-canvas');
+const storyVariantSelect = document.getElementById('story-variant-select');
+const storyPhotoSelect = document.getElementById('story-photo-select');
+const storyIncludeSpecs = document.getElementById('story-include-specs');
+const storyCaptionText = document.getElementById('story-caption-text');
+const storyLoading = document.getElementById('story-loading');
+const storyCorsNotice = document.getElementById('story-cors-notice');
+const btnDownloadStory = document.getElementById('btn-download-story');
+const btnShareStory = document.getElementById('btn-share-story');
+const btnCopyCaption = document.getElementById('btn-copy-caption');
+const storyCopyFeedback = document.getElementById('story-copy-feedback');
+
+if (navigator.share) {
+    btnShareStory?.classList.remove('d-none');
+}
+
+function updateStoryCaption() {
+    if (!currentStoryProduct) return;
+    const vIdx = parseInt(storyVariantSelect.value, 10) || 0;
+    const v = currentStoryProduct.variants[vIdx] || currentStoryProduct.variants[0];
+    const saveAmt = Math.max(0, v.original_price - v.promo_price);
+    const productUrl = `${BASE_ORIGIN}/#produk-${currentStoryProduct.id}`;
+    const waUrl = `https://wa.me/${STORE_WA}?text=${encodeURIComponent('Halo ' + STORE_NAME + ', saya ingin memesan ' + currentStoryProduct.name + ' varian ' + v.label + ' seharga ' + formatRupiahStory(v.promo_price) + ' (Story Promo). Apakah stok tersedia?')}`;
+
+    const lines = [
+        `🔥 PROMO SPESIAL: ${currentStoryProduct.name} (${currentStoryProduct.brand})`,
+        `📌 Varian: ${v.label}`,
+        `💰 Harga Promo: ${formatRupiahStory(v.promo_price)} (Normal: ${formatRupiahStory(v.original_price)} - Hemat ${formatRupiahStory(saveAmt)})`,
+        ``,
+        `✨ Spesifikasi Utama:`,
+        ...currentStoryProduct.specs.slice(0, 4).map(s => `• ${s}`),
+        ``,
+        `✅ 100% Baru & Garansi Resmi Toko`,
+        `✅ Siap Kirim Seluruh Indonesia / Ambil di Toko`,
+        `📲 Chat & Order WhatsApp: ${waUrl}`,
+        `🔗 Cek detail di web: ${productUrl}`,
+    ];
+
+    storyCaptionText.value = lines.join('\n');
+}
+
+function renderStoryCanvas() {
+    if (!currentStoryProduct || !storyCanvas) return;
+    const ctx = storyCanvas.getContext('2d');
+    const renderId = ++currentStoryRenderId;
+
+    const vIdx = parseInt(storyVariantSelect.value, 10) || 0;
+    const variant = currentStoryProduct.variants[vIdx] || currentStoryProduct.variants[0];
+    const photoUrl = storyPhotoSelect.value || currentStoryProduct.images[0];
+    const showSpecs = storyIncludeSpecs.checked;
+
+    storyLoading?.classList.remove('d-none');
+    storyCorsNotice?.classList.add('d-none');
+
+    // 1. Base Background
+    ctx.fillStyle = '#FCF9F3';
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    // 2. Outer Frame
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = '#111111';
+    ctx.strokeRect(36, 36, 1008, 1848);
+
+    // 3. Top Header Bar
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(66, 66, 948, 140);
+    ctx.fillStyle = '#F3ECE1';
+    ctx.fillRect(60, 60, 948, 140);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#111111';
+    ctx.strokeRect(60, 60, 948, 140);
+
+    // JC Badge
+    ctx.fillStyle = '#B87834';
+    ctx.fillRect(80, 80, 100, 100);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#111111';
+    ctx.strokeRect(80, 80, 100, 100);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = "bold 44px 'Space Grotesk', sans-serif";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('JC', 130, 132);
+
+    // Store Name & Label
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#1A1A1A';
+    ctx.font = "bold 38px 'Space Grotesk', sans-serif";
+    ctx.fillText(STORE_NAME.toUpperCase(), 200, 122);
+    ctx.fillStyle = '#78716C';
+    ctx.font = "bold 20px 'JetBrains Mono', monospace";
+    ctx.fillText('PUSAT KOMPUTER, LAPTOP & HARDWARE RESMI', 200, 158);
+
+    // 4. Category & Badge Strip
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(66, 226, 948, 64);
+    ctx.fillStyle = '#E5AC67';
+    ctx.fillRect(60, 220, 948, 64);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#111111';
+    ctx.strokeRect(60, 220, 948, 64);
+
+    ctx.fillStyle = '#1A1A1A';
+    ctx.font = "bold 24px 'JetBrains Mono', monospace";
+    ctx.textAlign = 'left';
+    ctx.fillText(('● ' + currentStoryProduct.category.toUpperCase() + '  |  ' + currentStoryProduct.badge.toUpperCase()), 84, 260);
+    ctx.textAlign = 'right';
+    ctx.fillText('GARANSI RESMI TOKO', 980, 260);
+
+    function drawPhotoBox(imgObj) {
+        if (renderId !== currentStoryRenderId) return;
+
+        // Shadow box
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(68, 308, 948, 640);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(60, 300, 948, 640);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#111111';
+        ctx.strokeRect(60, 300, 948, 640);
+
+        if (imgObj) {
+            try {
+                const targetX = 68;
+                const targetY = 308;
+                const targetW = 932;
+                const targetH = 624;
+
+                const imgW = imgObj.naturalWidth || imgObj.width;
+                const imgH = imgObj.naturalHeight || imgObj.height;
+                const scale = Math.min(targetW / imgW, targetH / imgH);
+                const dw = imgW * scale;
+                const dh = imgH * scale;
+                const dx = targetX + (targetW - dw) / 2;
+                const dy = targetY + (targetH - dh) / 2;
+
+                ctx.drawImage(imgObj, dx, dy, dw, dh);
+            } catch (e) {
+                drawFallbackGraphic();
+            }
+        } else {
+            drawFallbackGraphic();
+        }
+
+        if (currentStoryProduct.isSoldOut) {
+            ctx.fillStyle = '#DC2626';
+            ctx.fillRect(60, 310, 340, 60);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(60, 310, 340, 60);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = "bold 32px 'Space Grotesk', sans-serif";
+            ctx.textAlign = 'center';
+            ctx.fillText('SOLD OUT', 230, 352);
+        }
+
+        drawProductInfo();
+        storyLoading?.classList.add('d-none');
+    }
+
+    function drawFallbackGraphic() {
+        ctx.fillStyle = '#F3ECE1';
+        ctx.fillRect(68, 308, 932, 624);
+        ctx.fillStyle = '#B87834';
+        ctx.font = "bold 34px 'Space Grotesk', sans-serif";
+        ctx.textAlign = 'center';
+        ctx.fillText(currentStoryProduct.name, 534, 600);
+        ctx.fillStyle = '#78716C';
+        ctx.font = "bold 24px 'JetBrains Mono', monospace";
+        ctx.fillText(currentStoryProduct.brand + ' • ' + currentStoryProduct.category, 534, 645);
+    }
+
+    function drawProductInfo() {
+        // Brand
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#B87834';
+        ctx.font = "bold 26px 'JetBrains Mono', monospace";
+        ctx.fillText(currentStoryProduct.brand.toUpperCase() + ' ORIGINAL', 64, 985);
+
+        // Name with wrapping (max 2 lines)
+        ctx.fillStyle = '#1A1A1A';
+        ctx.font = "bold 48px 'Space Grotesk', sans-serif";
+        const words = currentStoryProduct.name.split(' ');
+        let line = '';
+        let y = 1045;
+        let lineCount = 0;
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > 940 && i > 0) {
+                ctx.fillText(line.trim(), 64, y);
+                line = words[i] + ' ';
+                y += 58;
+                lineCount++;
+                if (lineCount >= 1) break;
+            } else {
+                line = testLine;
+            }
+        }
+        if (line.trim()) {
+            ctx.fillText(line.trim(), 64, y);
+        }
+
+        // Specs Chips
+        if (showSpecs && currentStoryProduct.specs.length > 0) {
+            let specX = 64;
+            let specY = y + 42;
+            ctx.font = "bold 22px 'JetBrains Mono', monospace";
+            currentStoryProduct.specs.slice(0, 3).forEach((sp) => {
+                const spWidth = ctx.measureText(sp).width + 36;
+                if (specX + spWidth < 1000) {
+                    ctx.fillStyle = '#111111';
+                    ctx.fillRect(specX + 4, specY + 4, spWidth, 44);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(specX, specY, spWidth, 44);
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = '#111111';
+                    ctx.strokeRect(specX, specY, spWidth, 44);
+                    ctx.fillStyle = '#1A1A1A';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(sp, specX + 18, specY + 30);
+                    specX += spWidth + 14;
+                }
+            });
+        }
+
+        // Price Box
+        const priceBoxY = 1250;
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(68, priceBoxY + 8, 948, 310);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(60, priceBoxY, 948, 310);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#111111';
+        ctx.strokeRect(60, priceBoxY, 948, 310);
+
+        // Header variant bar
+        ctx.fillStyle = '#E5AC67';
+        ctx.fillRect(60, priceBoxY, 948, 56);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#111111';
+        ctx.strokeRect(60, priceBoxY, 948, 56);
+        ctx.fillStyle = '#1A1A1A';
+        ctx.font = "bold 24px 'JetBrains Mono', monospace";
+        ctx.textAlign = 'left';
+        ctx.fillText(('VARIAN: ' + variant.label).substring(0, 52), 80, priceBoxY + 37);
+
+        // Original price & hemat badge
+        ctx.fillStyle = '#78716C';
+        ctx.font = "bold 28px 'JetBrains Mono', monospace";
+        const origText = 'Normal: ' + formatRupiahStory(variant.original_price);
+        ctx.fillText(origText, 80, priceBoxY + 115);
+        const origWidth = ctx.measureText(origText).width;
+        ctx.strokeStyle = '#78716C';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(76, priceBoxY + 105);
+        ctx.lineTo(84 + origWidth, priceBoxY + 105);
+        ctx.stroke();
+
+        // Hemat badge
+        const saveAmount = Math.max(0, variant.original_price - variant.promo_price);
+        if (saveAmount > 0) {
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(688, priceBoxY + 80, 296, 46);
+            ctx.fillStyle = '#DC2626';
+            ctx.fillRect(684, priceBoxY + 76, 296, 46);
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(684, priceBoxY + 76, 296, 46);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = "bold 22px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.fillText('HEMAT ' + formatRupiahStory(saveAmount), 832, priceBoxY + 107);
+        }
+
+        // Promo Price Banner
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(82, priceBoxY + 154, 908, 130);
+        ctx.fillStyle = '#22C55E';
+        ctx.fillRect(76, priceBoxY + 148, 908, 130);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#111111';
+        ctx.strokeRect(76, priceBoxY + 148, 908, 130);
+
+        ctx.fillStyle = '#1A1A1A';
+        ctx.textAlign = 'left';
+        ctx.font = "bold 26px 'Space Grotesk', sans-serif";
+        ctx.fillText('HARGA PROMO SPESIAL:', 102, priceBoxY + 192);
+        ctx.font = "bold 64px 'Space Grotesk', sans-serif";
+        ctx.fillText(formatRupiahStory(variant.promo_price), 102, priceBoxY + 256);
+        ctx.textAlign = 'right';
+        ctx.font = "bold 24px 'JetBrains Mono', monospace";
+        ctx.fillText(currentStoryProduct.isSoldOut ? 'STOK HABIS' : 'READY TOKO', 952, priceBoxY + 226);
+
+        // Footer CTA
+        const footerY = 1600;
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(68, footerY + 8, 948, 240);
+        ctx.fillStyle = '#F3ECE1';
+        ctx.fillRect(60, footerY, 948, 240);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#111111';
+        ctx.strokeRect(60, footerY, 948, 240);
+
+        ctx.fillStyle = '#1A1A1A';
+        ctx.textAlign = 'left';
+        ctx.font = "bold 26px 'JetBrains Mono', monospace";
+        ctx.fillText('CARA ORDER & KONSULTASI VIA WHATSAPP:', 86, footerY + 52);
+
+        ctx.fillStyle = '#16A34A';
+        ctx.font = "bold 56px 'Space Grotesk', sans-serif";
+        ctx.fillText('+ ' + STORE_WA, 86, footerY + 118);
+
+        ctx.fillStyle = '#1A1A1A';
+        ctx.font = "bold 22px 'Work Sans', sans-serif";
+        ctx.fillText(STORE_ADDRESS, 86, footerY + 168);
+
+        ctx.fillStyle = '#78716C';
+        ctx.font = "bold 20px 'JetBrains Mono', monospace";
+        ctx.fillText('Pesan cepat tanpa ribet via link di bio / status WhatsApp!', 86, footerY + 210);
+    }
+
+    if (photoUrl && photoUrl !== '/images/placeholder.jpg') {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            drawPhotoBox(img);
+        };
+        img.onerror = () => {
+            storyCorsNotice?.classList.remove('d-none');
+            drawPhotoBox(null);
+        };
+        img.src = photoUrl;
+    } else {
+        drawPhotoBox(null);
+    }
+}
+
+document.querySelectorAll('.story-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+        const brand = btn.dataset.brand;
+        const category = btn.dataset.category;
+        const badge = btn.dataset.badge;
+        const rawImages = (btn.dataset.image || '').split(';').map(s => s.trim()).filter(Boolean);
+        const specs = (btn.dataset.specs || '').split('\n').map(s => s.trim()).filter(Boolean);
+        const rawVariants = (btn.dataset.variants || '').split('\n').map(s => s.trim()).filter(Boolean);
+        const isSoldOut = btn.dataset.soldOut === '1';
+
+        const variants = rawVariants.map((line) => {
+            const parts = line.split('|').map(p => p.trim());
+            return {
+                label: parts[0] || 'Standar',
+                promo_price: parseInt((parts[1] || '').replace(/[^0-9]/g, ''), 10) || 0,
+                original_price: parseInt((parts[2] || '').replace(/[^0-9]/g, ''), 10) || 0,
+            };
+        }).filter(v => v.promo_price > 0);
+
+        currentStoryProduct = {
+            id,
+            name,
+            brand,
+            category,
+            badge,
+            images: rawImages.length ? rawImages : ['/images/placeholder.jpg'],
+            specs,
+            variants: variants.length ? variants : [{ label: 'Unit Lengkap', promo_price: 1000000, original_price: 1200000 }],
+            isSoldOut
+        };
+
+        storyVariantSelect.innerHTML = '';
+        currentStoryProduct.variants.forEach((v, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = `${v.label} — ${formatRupiahStory(v.promo_price)}`;
+            storyVariantSelect.appendChild(opt);
+        });
+
+        storyPhotoSelect.innerHTML = '';
+        currentStoryProduct.images.forEach((imgUrl, idx) => {
+            const opt = document.createElement('option');
+            opt.value = imgUrl;
+            opt.textContent = `Foto ${idx + 1} (${imgUrl.startsWith('/uploads/') ? 'Upload Lokal' : 'Web/URL'})`;
+            storyPhotoSelect.appendChild(opt);
+        });
+
+        storyCorsNotice?.classList.add('d-none');
+        storyCopyFeedback?.classList.add('d-none');
+
+        updateStoryCaption();
+        renderStoryCanvas();
+
+        const bsModal = window.bootstrap ? bootstrap.Modal.getOrCreateInstance(storyModalEl) : null;
+        if (bsModal) {
+            bsModal.show();
+        } else {
+            storyModalEl.classList.add('show');
+            storyModalEl.style.display = 'block';
+        }
+    });
+});
+
+storyVariantSelect?.addEventListener('change', () => {
+    updateStoryCaption();
+    renderStoryCanvas();
+});
+
+storyPhotoSelect?.addEventListener('change', () => {
+    renderStoryCanvas();
+});
+
+storyIncludeSpecs?.addEventListener('change', () => {
+    renderStoryCanvas();
+});
+
+btnDownloadStory?.addEventListener('click', () => {
+    if (!currentStoryProduct || !storyCanvas) return;
+    try {
+        const dataUrl = storyCanvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `story-${currentStoryProduct.id}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } catch (e) {
+        alert('Gagal mengunduh gambar karena pembatasan CORS pada foto eksternal. Silakan gunakan foto yang diunggah ke server lokal.');
+    }
+});
+
+btnShareStory?.addEventListener('click', () => {
+    if (!currentStoryProduct || !storyCanvas || !navigator.share) return;
+    storyCanvas.toBlob(async (blob) => {
+        if (!blob) return;
+        try {
+            const file = new File([blob], `story-${currentStoryProduct.id}.png`, { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: `Promo ${currentStoryProduct.name} - ${STORE_NAME}`,
+                    text: storyCaptionText.value,
+                    files: [file],
+                });
+            } else {
+                await navigator.share({
+                    title: `Promo ${currentStoryProduct.name} - ${STORE_NAME}`,
+                    text: storyCaptionText.value,
+                    url: `${BASE_ORIGIN}/#produk-${currentStoryProduct.id}`,
+                });
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.error(err);
+            }
+        }
+    }, 'image/png');
+});
+
+btnCopyCaption?.addEventListener('click', async () => {
+    if (!storyCaptionText.value) return;
+    try {
+        await navigator.clipboard.writeText(storyCaptionText.value);
+        storyCopyFeedback?.classList.remove('d-none');
+        btnCopyCaption.textContent = '✓ Berhasil Disalin';
+        setTimeout(() => {
+            storyCopyFeedback?.classList.add('d-none');
+            btnCopyCaption.textContent = 'Salin Caption WA/IG';
+        }, 3000);
+    } catch (e) {
+        storyCaptionText.select();
+        document.execCommand('copy');
+    }
 });
 </script>
 </body>
