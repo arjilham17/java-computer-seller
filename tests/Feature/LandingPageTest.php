@@ -503,4 +503,68 @@ class LandingPageTest extends TestCase
         $admin->assertSee('STORE_LOGO', false);
         $admin->assertSee('Generator Story Card Produk');
     }
+
+    public function test_admin_can_change_password_and_plaintext_password_is_not_stored(): void
+    {
+        $currentPass = (string) env('ADMIN_PASSWORD');
+
+        // 1. Must be logged in
+        $this->post('/admin/password', [
+            'current_password' => $currentPass,
+            'new_password' => 'new-secure-pass-123',
+            'new_password_confirmation' => 'new-secure-pass-123',
+        ])->assertRedirect('/admin/login');
+
+        $this->post('/admin/login', ['password' => $currentPass])->assertRedirect('/admin');
+
+        // 2. Reject wrong current password
+        $this->post('/admin/password', [
+            'current_password' => 'wrong-pass',
+            'new_password' => 'new-secure-pass-123',
+            'new_password_confirmation' => 'new-secure-pass-123',
+        ])->assertRedirect('/admin')->assertSessionHasErrors('current_password');
+
+        // 3. Reject mismatch confirmation
+        $this->from('/admin')->post('/admin/password', [
+            'current_password' => $currentPass,
+            'new_password' => 'new-secure-pass-123',
+            'new_password_confirmation' => 'different-pass',
+        ])->assertRedirect('/admin')->assertSessionHasErrors('new_password');
+
+        // 4. Reject short password (<8 chars)
+        $this->from('/admin')->post('/admin/password', [
+            'current_password' => $currentPass,
+            'new_password' => 'short',
+            'new_password_confirmation' => 'short',
+        ])->assertRedirect('/admin')->assertSessionHasErrors('new_password');
+
+        // 5. Successful password change
+        $this->post('/admin/password', [
+            'current_password' => $currentPass,
+            'new_password' => 'new-secure-pass-123',
+            'new_password_confirmation' => 'new-secure-pass-123',
+        ])->assertRedirect('/admin')->assertSessionHas('status');
+
+        // 6. Verify catalog.json has hash and no plaintext password
+        $catalogData = json_decode(file_get_contents(storage_path('app/catalog.json')), true);
+        $this->assertArrayNotHasKey('admin_password', $catalogData);
+        $this->assertArrayHasKey('admin_password_hash', $catalogData);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('new-secure-pass-123', $catalogData['admin_password_hash']));
+
+        // 7. Verify backup download censors passwords
+        $backup = $this->get('/admin/backup');
+        $backupData = json_decode($backup->getContent(), true);
+        $this->assertArrayNotHasKey('admin_password', $backupData);
+        $this->assertArrayNotHasKey('admin_password_hash', $backupData);
+
+        // 8. Logout and verify old password is rejected while new password works
+        $this->post('/admin/logout')->assertRedirect('/admin/login');
+
+        $this->post('/admin/login', ['password' => $currentPass])
+            ->assertRedirect('/admin/login')
+            ->assertSessionHasErrors('password');
+
+        $this->post('/admin/login', ['password' => 'new-secure-pass-123'])
+            ->assertRedirect('/admin');
+    }
 }

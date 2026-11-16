@@ -246,6 +246,27 @@
                     <button type="submit" class="btn btn-primary w-100 py-2">Simpan Pengaturan &amp; Konten</button>
                 </form>
             </div>
+
+            <div class="brutal-card p-4 mb-4">
+                <div class="d-inline-block px-2 py-0.5 mb-2 fw-bold font-monospace small border border-dark" style="background:#E5AC67;">KEAMANAN AKUN</div>
+                <h2 class="h5 fw-bold mb-3">Ganti Password Admin</h2>
+                <form method="POST" action="/admin/password">
+                    @csrf
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold" for="f-current-password">Password Saat Ini</label>
+                        <input type="password" name="current_password" id="f-current-password" class="form-control form-control-sm" autocomplete="current-password" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold" for="f-new-password">Password Baru (Minimal 8 Karakter)</label>
+                        <input type="password" name="new_password" id="f-new-password" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="f-new-password-confirm">Konfirmasi Password Baru</label>
+                        <input type="password" name="new_password_confirmation" id="f-new-password-confirm" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2">Perbarui Password Admin</button>
+                </form>
+            </div>
         </div>
 
         <div class="col-lg-7">

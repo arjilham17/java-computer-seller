@@ -15,6 +15,7 @@ Route::prefix('admin')->middleware(EnsureAdminAuthenticated::class)->group(funct
     Route::get('/', [CatalogController::class, 'admin'])->name('admin.dashboard');
     Route::get('/backup', [CatalogController::class, 'backupCatalog'])->name('admin.backup');
     Route::post('/settings', [CatalogController::class, 'updateSettings'])->name('admin.settings');
+    Route::post('/password', [CatalogController::class, 'updatePassword'])->name('admin.password');
     Route::get('/products/template', [CatalogController::class, 'downloadTemplate'])->name('admin.products.template');
     Route::post('/products/import', [CatalogController::class, 'importProducts'])->name('admin.products.import');
     Route::post('/products', [CatalogController::class, 'saveProduct'])->name('admin.products.save');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class CatalogController extends Controller
@@ -73,8 +74,19 @@ class CatalogController extends Controller
         return $default;
     }
 
+    private function verifyAdminPassword(string $inputPassword, array $catalog): bool
+    {
+        if (!empty($catalog['admin_password_hash'])) {
+            return Hash::check($inputPassword, (string) $catalog['admin_password_hash']);
+        }
+
+        $expected = (string) config('catalog.admin_password', '');
+        return $expected !== '' && hash_equals($expected, $inputPassword);
+    }
+
     private function saveCatalog(array $catalog): void
     {
+        unset($catalog['admin_password']);
         $path = storage_path('app/catalog.json');
         @mkdir(dirname($path), 0775, true);
         file_put_contents($path, json_encode($catalog, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), LOCK_EX);
@@ -95,10 +107,9 @@ class CatalogController extends Controller
     public function login(Request $request)
     {
         $request->validate(['password' => 'required|string']);
-        $expected = (string) config('catalog.admin_password', '');
+        $catalog = $this->loadCatalog();
 
-        // No fallback password: empty ADMIN_PASSWORD must lock admin, not open it.
-        if ($expected === '' || !hash_equals($expected, (string) $request->input('password'))) {
+        if (!$this->verifyAdminPassword((string) $request->input('password'), $catalog)) {
             return redirect('/admin/login')->withErrors(['password' => 'Password admin tidak sesuai.']);
         }
 
@@ -123,12 +134,36 @@ class CatalogController extends Controller
     public function backupCatalog()
     {
         $catalog = $this->loadCatalog();
+        unset($catalog['admin_password'], $catalog['admin_password_hash']);
         $json = json_encode($catalog, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $filename = 'catalog-backup-' . date('Y-m-d') . '.json';
         return response($json, 200, [
             'Content-Type' => 'application/json',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ], [
+            'new_password.min' => 'Password baru minimal 8 karakter.',
+            'new_password.confirmed' => 'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        $catalog = $this->loadCatalog();
+        if (!$this->verifyAdminPassword((string) $request->input('current_password'), $catalog)) {
+            return redirect('/admin')->withErrors(['current_password' => 'Password saat ini tidak sesuai.']);
+        }
+
+        $catalog['admin_password_hash'] = Hash::make($request->input('new_password'));
+        unset($catalog['admin_password']);
+        $this->saveCatalog($catalog);
+
+        $request->session()->regenerate();
+        return redirect('/admin')->with('status', 'Password admin berhasil diperbarui.');
     }
 
     public function updateSettings(Request $request)

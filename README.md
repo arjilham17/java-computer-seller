@@ -17,7 +17,7 @@ Landing page katalog hardware dan promo penjualan perangkat komputer (**Laptop, 
 - **Informasi Toko Fisik & Workshop:** Jam operasional, alamat workshop, embed Google Maps responsif, tautan media sosial (Instagram, TikTok, Facebook), profil keunggulan, ulasan pelanggan, serta accordion FAQ.
 
 ### 2. Panel Admin (`/admin`)
-- **Autentikasi Terproteksi:** Login admin berbasis sesi dengan proteksi CSRF, rate limiter (`throttle:10,1`), dan pencocokan kata sandi menggunakan `hash_equals`.
+- **Autentikasi & Keamanan Akun:** Login admin berbasis sesi dengan proteksi CSRF, rate limiter (`throttle:10,1`), fitur ganti password admin langsung di dashboard dengan enkripsi bcrypt (`Hash::make`), dan pencegahan kebocoran plaintext password pada file backup.
 - **Pengaturan Profil Toko & Hero Deal:** Ubah nama toko, tagline, nomor WhatsApp admin, alamat, jam buka, sosmed, hingga detail kartu Flash Deal.
 - **Pengelolaan Konten Statis:** Edit bagian profil keunggulan workshop, embed peta, dan daftar FAQ langsung dari dashboard.
 - **Manajemen Produk Satuan:** Tambah dan perbarui produk dengan upload multi-foto, kompresi gambar otomatis (client-side Canvas & server-side GD untuk file > 4MB), spesifikasi, dan daftar varian harga.
