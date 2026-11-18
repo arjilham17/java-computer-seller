@@ -496,12 +496,20 @@ class LandingPageTest extends TestCase
         $admin->assertSee('story-btn', false);
         $admin->assertSee('id="storyModal"', false);
         $admin->assertSee('id="story-canvas"', false);
+        $admin->assertSee('id="story-theme-select"', false);
         $admin->assertSee('id="story-variant-select"', false);
         $admin->assertSee('id="story-photo-select"', false);
         $admin->assertSee('id="btn-download-story"', false);
         $admin->assertSee('id="btn-copy-caption"', false);
         $admin->assertSee('STORE_LOGO', false);
+        $admin->assertSee('STORY_THEMES', false);
         $admin->assertSee('Generator Story Card Produk');
+
+        foreach (['ramadhan', 'idul_fitri', 'tahun_baru', 'kemerdekaan', 'back_to_school', 'pemilu'] as $themeKey) {
+            $admin->assertSee('value="' . $themeKey . '"', false);
+        }
+        $admin->assertSee('Chat & Order WhatsApp: ${STORE_WA}', false);
+        $admin->assertSee('captionHook', false);
     }
 
     public function test_admin_can_change_password_and_plaintext_password_is_not_stored(): void

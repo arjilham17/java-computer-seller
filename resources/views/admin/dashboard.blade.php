@@ -464,6 +464,18 @@
                         <div class="brutal-card p-3 mb-3 bg-white">
                             <h3 class="h6 fw-bold mb-3">Pengaturan Kartu</h3>
                             <div class="mb-3">
+                                <label for="story-theme-select" class="form-label small fw-semibold">Pilih Tema Hari Besar / Promo:</label>
+                                <select id="story-theme-select" class="form-select form-select-sm">
+                                    <option value="default">Klasik Hardware (Default Toko)</option>
+                                    <option value="ramadhan">Bulan Ramadhan (Berkah Ramadhan)</option>
+                                    <option value="idul_fitri">Hari Raya Idul Fitri (Spesial Lebaran)</option>
+                                    <option value="tahun_baru">Tahun Baru (Upgrade Setup Baru)</option>
+                                    <option value="kemerdekaan">Hari Kemerdekaan Indonesia (Promo Merdeka 17-08)</option>
+                                    <option value="back_to_school">Tahun Ajaran Baru (Promo Pelajar &amp; Mahasiswa)</option>
+                                    <option value="pemilu">Promo Pemilu (Pesta Demokrasi)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
                                 <label for="story-variant-select" class="form-label small fw-semibold">Pilih Varian Spesifikasi &amp; Harga:</label>
                                 <select id="story-variant-select" class="form-select form-select-sm"></select>
                             </div>
@@ -657,6 +669,7 @@ let currentStoryRenderId = 0;
 
 const storyModalEl = document.getElementById('storyModal');
 const storyCanvas = document.getElementById('story-canvas');
+const storyThemeSelect = document.getElementById('story-theme-select');
 const storyVariantSelect = document.getElementById('story-variant-select');
 const storyPhotoSelect = document.getElementById('story-photo-select');
 const storyIncludeSpecs = document.getElementById('story-include-specs');
@@ -668,30 +681,363 @@ const btnShareStory = document.getElementById('btn-share-story');
 const btnCopyCaption = document.getElementById('btn-copy-caption');
 const storyCopyFeedback = document.getElementById('story-copy-feedback');
 
+const STORY_THEMES = {
+    default: {
+        canvasBg: '#FCF9F3',
+        frameBorder: '#111111',
+        headerBg: '#F3ECE1',
+        headerText: '#1A1A1A',
+        headerSubText: '#57534E',
+        headerSub: 'PUSAT KOMPUTER, LAPTOP & HARDWARE RESMI',
+        stripBg: '#E5AC67',
+        stripText: '#1A1A1A',
+        rightStripTag: 'GARANSI RESMI TOKO',
+        brandColor: '#825514',
+        titleColor: '#1A1A1A',
+        variantBarBg: '#E5AC67',
+        variantBarText: '#1A1A1A',
+        hematBg: '#DC2626',
+        hematText: '#FFFFFF',
+        promoBg: '#22C55E',
+        promoText: '#1A1A1A',
+        promoHeading: 'HARGA PROMO SPESIAL:',
+        footerBg: '#F3ECE1',
+        waColor: '#15803D',
+        footerNote: 'Pesan cepat tanpa ribet via link di bio / status WhatsApp!',
+        captionHook: 'Spill setup wajib buat nugas, kerja, atau mabar tanpa drama ngelag!',
+        captionClosing: 'Unit 100% ori, bergaransi resmi toko, tinggal gas pake. Stok promo terbatas, jangan sampe kehabisan!',
+        drawOrnament(ctx) {
+            ctx.fillStyle = '#E5AC67';
+            ctx.fillRect(888, 80, 100, 100);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(888, 80, 100, 100);
+            ctx.fillStyle = '#1A1A1A';
+            ctx.fillRect(913, 105, 50, 50);
+            for (let i = 0; i < 3; i++) {
+                const offset = 112 + i * 16;
+                ctx.fillRect(900, offset, 10, 5);
+                ctx.fillRect(966, offset, 10, 5);
+                ctx.fillRect(808 + offset, 92, 5, 10);
+                ctx.fillRect(808 + offset, 158, 5, 10);
+            }
+        }
+    },
+    ramadhan: {
+        canvasBg: '#FAF6EC',
+        frameBorder: '#111111',
+        headerBg: '#F3ECE1',
+        headerText: '#1A1A1A',
+        headerSubText: '#065F46',
+        headerSub: 'SPESIAL BERKAH BULAN SUCI RAMADHAN',
+        stripBg: '#FCD34D',
+        stripText: '#1A1A1A',
+        rightStripTag: 'PROMO BERKAH RAMADHAN',
+        brandColor: '#065F46',
+        titleColor: '#1A1A1A',
+        variantBarBg: '#FCD34D',
+        variantBarText: '#1A1A1A',
+        hematBg: '#B45309',
+        hematText: '#FFFFFF',
+        promoBg: '#065F46',
+        promoText: '#FFFFFF',
+        promoHeading: 'HARGA BERKAH RAMADHAN:',
+        footerBg: '#F3ECE1',
+        waColor: '#065F46',
+        footerNote: 'Promo berkah Ramadhan: gratis instalasi & siap pakai untuk ibadah/kerja!',
+        captionHook: 'Edisi Berkah Ramadhan! Ngabuburit makin produktif bareng gear baru yang sat-set:',
+        captionClosing: 'Udah free instalasi & garansi resmi toko. Stok Ramadhan terbatas, amankan unitmu sebelum sold out!',
+        drawOrnament(ctx) {
+            ctx.fillStyle = '#065F46';
+            ctx.fillRect(888, 80, 100, 100);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(888, 80, 100, 100);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(936, 130, 30, 0, Math.PI * 2);
+            ctx.fillStyle = '#FCD34D';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(948, 122, 24, 0, Math.PI * 2);
+            ctx.fillStyle = '#065F46';
+            ctx.fill();
+            ctx.fillStyle = '#FCD34D';
+            ctx.fillRect(954, 104, 10, 10);
+            ctx.restore();
+        }
+    },
+    idul_fitri: {
+        canvasBg: '#F7FAF5',
+        frameBorder: '#111111',
+        headerBg: '#ECFDF5',
+        headerText: '#1A1A1A',
+        headerSubText: '#166534',
+        headerSub: 'PROMO SPESIAL HARI RAYA IDUL FITRI',
+        stripBg: '#FDE047',
+        stripText: '#1A1A1A',
+        rightStripTag: 'SPESIAL LEBARAN IDUL FITRI',
+        brandColor: '#166534',
+        titleColor: '#1A1A1A',
+        variantBarBg: '#FDE047',
+        variantBarText: '#1A1A1A',
+        hematBg: '#B45309',
+        hematText: '#FFFFFF',
+        promoBg: '#15803D',
+        promoText: '#FFFFFF',
+        promoHeading: 'HARGA SPESIAL IDUL FITRI:',
+        footerBg: '#ECFDF5',
+        waColor: '#15803D',
+        footerNote: 'Spesial Hari Raya Idul Fitri: tukar THR dengan perangkat bergaransi resmi!',
+        captionHook: 'THR cair saatnya self-reward! Upgrade laptop atau PC impian di Promo Spesial Lebaran:',
+        captionClosing: 'Biar THR nggak numpang lewat doang, mending jadiin gear awet bergaransi resmi toko!',
+        drawOrnament(ctx) {
+            ctx.fillStyle = '#FDE047';
+            ctx.fillRect(888, 80, 100, 100);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(888, 80, 100, 100);
+            ctx.save();
+            ctx.translate(938, 124);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillStyle = '#15803D';
+            ctx.fillRect(-22, -22, 44, 44);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(-22, -22, 44, 44);
+            ctx.strokeStyle = '#FDE047';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-22, -7); ctx.lineTo(22, -7);
+            ctx.moveTo(-22, 7); ctx.lineTo(22, 7);
+            ctx.moveTo(-7, -22); ctx.lineTo(-7, 22);
+            ctx.moveTo(7, -22); ctx.lineTo(7, 22);
+            ctx.stroke();
+            ctx.restore();
+            ctx.fillStyle = '#15803D';
+            ctx.fillRect(931, 156, 6, 16);
+            ctx.fillRect(940, 156, 6, 16);
+        }
+    },
+    tahun_baru: {
+        canvasBg: '#0F172A',
+        frameBorder: '#38BDF8',
+        headerBg: '#F8FAFC',
+        headerText: '#0F172A',
+        headerSubText: '#1E3A8A',
+        headerSub: 'PROMO TAHUN BARU - UPGRADE SETUP BARU',
+        stripBg: '#FACC15',
+        stripText: '#0F172A',
+        rightStripTag: 'TAHUN BARU SETUP BARU',
+        brandColor: '#FACC15',
+        titleColor: '#F8FAFC',
+        variantBarBg: '#38BDF8',
+        variantBarText: '#0F172A',
+        hematBg: '#E11D48',
+        hematText: '#FFFFFF',
+        promoBg: '#FACC15',
+        promoText: '#0F172A',
+        promoHeading: 'HARGA PROMO TAHUN BARU:',
+        footerBg: '#F8FAFC',
+        waColor: '#0369A1',
+        footerNote: 'Sambut tahun baru dengan laptop & PC rakitan baru siap kerja cepat!',
+        captionHook: 'Tahun baru, setup baru! Bye-bye device lemot, saatnya pindah ke yang ngebut:',
+        captionClosing: 'Awali tahun baru dengan performa maksimal, 100% ori & langsung siap tempur!',
+        drawOrnament(ctx) {
+            ctx.fillStyle = '#0F172A';
+            ctx.fillRect(888, 80, 100, 100);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(888, 80, 100, 100);
+            ctx.save();
+            ctx.translate(938, 130);
+            ctx.strokeStyle = '#FACC15';
+            ctx.lineWidth = 4;
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, -10);
+                ctx.lineTo(0, -32);
+                ctx.stroke();
+                ctx.rotate(Math.PI / 4);
+            }
+            ctx.fillStyle = '#38BDF8';
+            ctx.beginPath();
+            ctx.arc(0, 0, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    },
+    kemerdekaan: {
+        canvasBg: '#FFF8F6',
+        frameBorder: '#111111',
+        headerBg: '#FFFFFF',
+        headerText: '#1A1A1A',
+        headerSubText: '#B91C1C',
+        headerSub: 'SEMARAK KEMERDEKAAN REPUBLIK INDONESIA',
+        stripBg: '#DC2626',
+        stripText: '#FFFFFF',
+        rightStripTag: 'DIRGAHAYU RI 17 AGUSTUS',
+        brandColor: '#B91C1C',
+        titleColor: '#1A1A1A',
+        variantBarBg: '#FDE047',
+        variantBarText: '#1A1A1A',
+        hematBg: '#1A1A1A',
+        hematText: '#FFFFFF',
+        promoBg: '#B91C1C',
+        promoText: '#FFFFFF',
+        promoHeading: 'HARGA PROMO MERDEKA:',
+        footerBg: '#FFFFFF',
+        waColor: '#B91C1C',
+        footerNote: 'Promo Semarak Kemerdekaan RI: diskon merdeka untuk semua produk pilihan!',
+        captionHook: 'Promo Merdeka 17-an! Saatnya merdeka dari laptop kentang & PC lemot:',
+        captionClosing: 'Harga merdeka paling worth it minggu ini, jaminan ori & garansi resmi toko!',
+        drawOrnament(ctx) {
+            ctx.fillStyle = '#DC2626';
+            ctx.fillRect(888, 80, 100, 50);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(888, 130, 100, 50);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(888, 80, 100, 100);
+            ctx.beginPath();
+            ctx.moveTo(888, 130);
+            ctx.lineTo(988, 130);
+            ctx.stroke();
+            ctx.fillStyle = '#FDE047';
+            ctx.fillRect(904, 114, 68, 32);
+            ctx.strokeRect(904, 114, 68, 32);
+            ctx.fillStyle = '#111111';
+            ctx.font = "bold 18px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('17-08', 938, 131);
+        }
+    },
+    back_to_school: {
+        canvasBg: '#F1F5F9',
+        frameBorder: '#111111',
+        headerBg: '#FFFFFF',
+        headerText: '#0F172A',
+        headerSubText: '#1D4ED8',
+        headerSub: 'SPESIAL TAHUN AJARAN BARU PELAJAR & MAHASISWA',
+        stripBg: '#FDE047',
+        stripText: '#0F172A',
+        rightStripTag: 'PROMO PELAJAR & MAHASISWA',
+        brandColor: '#1D4ED8',
+        titleColor: '#0F172A',
+        variantBarBg: '#DBEAFE',
+        variantBarText: '#0F172A',
+        hematBg: '#E11D48',
+        hematText: '#FFFFFF',
+        promoBg: '#1D4ED8',
+        promoText: '#FFFFFF',
+        promoHeading: 'HARGA PROMO PELAJAR:',
+        footerBg: '#FFFFFF',
+        waColor: '#1D4ED8',
+        footerNote: 'Gratis instalasi Windows, Office & aplikasi kuliah/sekolah siap pakai!',
+        captionHook: 'Back to School & Campus! Senjata wajib buat pejuang tugas, coding, sampe skripsian:',
+        captionClosing: 'Udah free instalasi Windows, Office & aplikasi kuliah. Tinggal buka, langsung siap nugas!',
+        drawOrnament(ctx) {
+            ctx.fillStyle = '#FDE047';
+            ctx.fillRect(888, 80, 100, 100);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(888, 80, 100, 100);
+            ctx.fillStyle = '#1D4ED8';
+            ctx.beginPath();
+            ctx.moveTo(938, 98);
+            ctx.lineTo(976, 118);
+            ctx.lineTo(938, 138);
+            ctx.lineTo(900, 118);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillRect(916, 136, 44, 18);
+            ctx.strokeRect(916, 136, 44, 18);
+            ctx.strokeStyle = '#111111';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(970, 120);
+            ctx.lineTo(970, 156);
+            ctx.stroke();
+        }
+    },
+    pemilu: {
+        canvasBg: '#FAF7FC',
+        frameBorder: '#111111',
+        headerBg: '#F3E8FF',
+        headerText: '#1A1A1A',
+        headerSubText: '#5B21B6',
+        headerSub: 'PROMO PESTA DEMOKRASI - DISKON SPESIAL PEMILU',
+        stripBg: '#DDD6FE',
+        stripText: '#1A1A1A',
+        rightStripTag: 'PROMO PESTA DEMOKRASI',
+        brandColor: '#5B21B6',
+        titleColor: '#1A1A1A',
+        variantBarBg: '#FCE7F3',
+        variantBarText: '#1A1A1A',
+        hematBg: '#E11D48',
+        hematText: '#FFFFFF',
+        promoBg: '#5B21B6',
+        promoText: '#FFFFFF',
+        promoHeading: 'HARGA SPESIAL PEMILU:',
+        footerBg: '#F3E8FF',
+        waColor: '#5B21B6',
+        footerNote: 'Semarak Pesta Demokrasi: tunjukkan jari tinta ungu & klaim harga promo ini!',
+        captionHook: 'Spesial Pesta Demokrasi! Habis nyoblos jangan lupa klaim diskon jari tinta ungu:',
+        captionClosing: 'Cukup tunjukin jari tinta ungu kamu buat dapetin harga spesial ini di toko atau via chat!',
+        drawOrnament(ctx) {
+            ctx.fillStyle = '#DDD6FE';
+            ctx.fillRect(888, 80, 100, 100);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(888, 80, 100, 100);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(906, 96, 64, 68);
+            ctx.strokeRect(906, 96, 64, 68);
+            ctx.strokeStyle = '#5B21B6';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(920, 130);
+            ctx.lineTo(934, 144);
+            ctx.lineTo(958, 114);
+            ctx.stroke();
+        }
+    }
+};
+
+function getActiveStoryTheme() {
+    const key = storyThemeSelect?.value || 'default';
+    return STORY_THEMES[key] || STORY_THEMES.default;
+}
+
 if (navigator.share) {
     btnShareStory?.classList.remove('d-none');
 }
 
 function updateStoryCaption() {
     if (!currentStoryProduct) return;
+    const theme = getActiveStoryTheme();
     const vIdx = parseInt(storyVariantSelect.value, 10) || 0;
     const v = currentStoryProduct.variants[vIdx] || currentStoryProduct.variants[0];
     const saveAmt = Math.max(0, v.original_price - v.promo_price);
     const productUrl = `${BASE_ORIGIN}/#produk-${currentStoryProduct.id}`;
-    const waUrl = `https://wa.me/${STORE_WA}?text=${encodeURIComponent('Halo ' + STORE_NAME + ', saya ingin memesan ' + currentStoryProduct.name + ' varian ' + v.label + ' seharga ' + formatRupiahStory(v.promo_price) + ' (Story Promo). Apakah stok tersedia?')}`;
 
     const lines = [
-        `🔥 PROMO SPESIAL: ${currentStoryProduct.name} (${currentStoryProduct.brand})`,
-        `📌 Varian: ${v.label}`,
-        `💰 Harga Promo: ${formatRupiahStory(v.promo_price)} (Normal: ${formatRupiahStory(v.original_price)} - Hemat ${formatRupiahStory(saveAmt)})`,
+        theme.captionHook,
+        `${currentStoryProduct.name} (${currentStoryProduct.brand}) - Varian ${v.label}`,
         ``,
-        `✨ Spesifikasi Utama:`,
-        ...currentStoryProduct.specs.slice(0, 4).map(s => `• ${s}`),
+        `Harga Promo: ${formatRupiahStory(v.promo_price)} (Harga normal ${formatRupiahStory(v.original_price)}, auto hemat ${formatRupiahStory(saveAmt)}!)`,
         ``,
-        `✅ 100% Baru & Garansi Resmi Toko`,
-        `✅ Siap Kirim Seluruh Indonesia / Ambil di Toko`,
-        `📲 Chat & Order WhatsApp: ${waUrl}`,
-        `🔗 Cek detail di web: ${productUrl}`,
+        `Spek andalan:`,
+        ...currentStoryProduct.specs.slice(0, 4).map(s => `- ${s}`),
+        ``,
+        theme.captionClosing,
+        ``,
+        `Chat & Order WhatsApp: ${STORE_WA}`,
+        `Cek katalog lengkap: ${productUrl}`,
     ];
 
     storyCaptionText.value = lines.join('\n');
@@ -701,6 +1047,7 @@ function renderStoryCanvas() {
     if (!currentStoryProduct || !storyCanvas) return;
     const ctx = storyCanvas.getContext('2d');
     const renderId = ++currentStoryRenderId;
+    const theme = getActiveStoryTheme();
 
     const vIdx = parseInt(storyVariantSelect.value, 10) || 0;
     const variant = currentStoryProduct.variants[vIdx] || currentStoryProduct.variants[0];
@@ -711,18 +1058,18 @@ function renderStoryCanvas() {
     storyCorsNotice?.classList.add('d-none');
 
     // 1. Base Background
-    ctx.fillStyle = '#FCF9F3';
+    ctx.fillStyle = theme.canvasBg;
     ctx.fillRect(0, 0, 1080, 1920);
 
     // 2. Outer Frame
     ctx.lineWidth = 14;
-    ctx.strokeStyle = '#111111';
+    ctx.strokeStyle = theme.frameBorder;
     ctx.strokeRect(36, 36, 1008, 1848);
 
     // 3. Top Header Bar
     ctx.fillStyle = '#111111';
     ctx.fillRect(66, 66, 948, 140);
-    ctx.fillStyle = '#F3ECE1';
+    ctx.fillStyle = theme.headerBg;
     ctx.fillRect(60, 60, 948, 140);
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#111111';
@@ -769,31 +1116,37 @@ function renderStoryCanvas() {
         ctx.fillText('JC', 130, 132);
     }
 
-    // Store Name & Label
+    // Store Name & Theme Subtitle
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#1A1A1A';
+    ctx.fillStyle = theme.headerText;
     ctx.font = "bold 38px 'Space Grotesk', sans-serif";
-    ctx.fillText(STORE_NAME.toUpperCase(), 200, 122);
-    ctx.fillStyle = '#78716C';
+    ctx.fillText(STORE_NAME.toUpperCase(), 200, 122, 660);
+    ctx.fillStyle = theme.headerSubText;
     ctx.font = "bold 20px 'JetBrains Mono', monospace";
-    ctx.fillText('PUSAT KOMPUTER, LAPTOP & HARDWARE RESMI', 200, 158);
+    ctx.fillText(theme.headerSub, 200, 158, 660);
+
+    // Draw Theme Vector Ornament in Header Right
+    if (typeof theme.drawOrnament === 'function') {
+        theme.drawOrnament(ctx);
+    }
 
     // 4. Category & Badge Strip
     ctx.fillStyle = '#111111';
     ctx.fillRect(66, 226, 948, 64);
-    ctx.fillStyle = '#E5AC67';
+    ctx.fillStyle = theme.stripBg;
     ctx.fillRect(60, 220, 948, 64);
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#111111';
     ctx.strokeRect(60, 220, 948, 64);
 
-    ctx.fillStyle = '#1A1A1A';
+    ctx.fillStyle = theme.stripText;
     ctx.font = "bold 24px 'JetBrains Mono', monospace";
     ctx.textAlign = 'left';
-    ctx.fillText(('● ' + currentStoryProduct.category.toUpperCase() + '  |  ' + currentStoryProduct.badge.toUpperCase()), 84, 260);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(('● ' + currentStoryProduct.category.toUpperCase() + '  |  ' + currentStoryProduct.badge.toUpperCase()), 84, 260, 540);
     ctx.textAlign = 'right';
-    ctx.fillText('GARANSI RESMI TOKO', 980, 260);
+    ctx.fillText(theme.rightStripTag, 984, 260, 360);
 
     function drawPhotoBox(imgObj) {
         if (renderId !== currentStoryRenderId) return;
@@ -849,11 +1202,11 @@ function renderStoryCanvas() {
     function drawFallbackGraphic() {
         ctx.fillStyle = '#F3ECE1';
         ctx.fillRect(68, 308, 932, 624);
-        ctx.fillStyle = '#B87834';
+        ctx.fillStyle = '#825514';
         ctx.font = "bold 34px 'Space Grotesk', sans-serif";
         ctx.textAlign = 'center';
         ctx.fillText(currentStoryProduct.name, 534, 600);
-        ctx.fillStyle = '#78716C';
+        ctx.fillStyle = '#57534E';
         ctx.font = "bold 24px 'JetBrains Mono', monospace";
         ctx.fillText(currentStoryProduct.brand + ' • ' + currentStoryProduct.category, 534, 645);
     }
@@ -861,12 +1214,12 @@ function renderStoryCanvas() {
     function drawProductInfo() {
         // Brand
         ctx.textAlign = 'left';
-        ctx.fillStyle = '#B87834';
+        ctx.fillStyle = theme.brandColor;
         ctx.font = "bold 26px 'JetBrains Mono', monospace";
         ctx.fillText(currentStoryProduct.brand.toUpperCase() + ' ORIGINAL', 64, 985);
 
         // Name with wrapping (max 2 lines)
-        ctx.fillStyle = '#1A1A1A';
+        ctx.fillStyle = theme.titleColor;
         ctx.font = "bold 48px 'Space Grotesk', sans-serif";
         const words = currentStoryProduct.name.split(' ');
         let line = '';
@@ -923,23 +1276,23 @@ function renderStoryCanvas() {
         ctx.strokeRect(60, priceBoxY, 948, 310);
 
         // Header variant bar
-        ctx.fillStyle = '#E5AC67';
+        ctx.fillStyle = theme.variantBarBg;
         ctx.fillRect(60, priceBoxY, 948, 56);
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#111111';
         ctx.strokeRect(60, priceBoxY, 948, 56);
-        ctx.fillStyle = '#1A1A1A';
+        ctx.fillStyle = theme.variantBarText;
         ctx.font = "bold 24px 'JetBrains Mono', monospace";
         ctx.textAlign = 'left';
         ctx.fillText(('VARIAN: ' + variant.label).substring(0, 52), 80, priceBoxY + 37);
 
         // Original price & hemat badge
-        ctx.fillStyle = '#78716C';
+        ctx.fillStyle = '#57534E';
         ctx.font = "bold 28px 'JetBrains Mono', monospace";
         const origText = 'Normal: ' + formatRupiahStory(variant.original_price);
         ctx.fillText(origText, 80, priceBoxY + 115);
         const origWidth = ctx.measureText(origText).width;
-        ctx.strokeStyle = '#78716C';
+        ctx.strokeStyle = '#57534E';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(76, priceBoxY + 105);
@@ -951,12 +1304,12 @@ function renderStoryCanvas() {
         if (saveAmount > 0) {
             ctx.fillStyle = '#111111';
             ctx.fillRect(688, priceBoxY + 80, 296, 46);
-            ctx.fillStyle = '#DC2626';
+            ctx.fillStyle = theme.hematBg;
             ctx.fillRect(684, priceBoxY + 76, 296, 46);
             ctx.lineWidth = 2.5;
             ctx.strokeStyle = '#111111';
             ctx.strokeRect(684, priceBoxY + 76, 296, 46);
-            ctx.fillStyle = '#FFFFFF';
+            ctx.fillStyle = theme.hematText;
             ctx.font = "bold 22px 'JetBrains Mono', monospace";
             ctx.textAlign = 'center';
             ctx.fillText('HEMAT ' + formatRupiahStory(saveAmount), 832, priceBoxY + 107);
@@ -965,16 +1318,16 @@ function renderStoryCanvas() {
         // Promo Price Banner
         ctx.fillStyle = '#111111';
         ctx.fillRect(82, priceBoxY + 154, 908, 130);
-        ctx.fillStyle = '#22C55E';
+        ctx.fillStyle = theme.promoBg;
         ctx.fillRect(76, priceBoxY + 148, 908, 130);
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#111111';
         ctx.strokeRect(76, priceBoxY + 148, 908, 130);
 
-        ctx.fillStyle = '#1A1A1A';
+        ctx.fillStyle = theme.promoText;
         ctx.textAlign = 'left';
         ctx.font = "bold 26px 'Space Grotesk', sans-serif";
-        ctx.fillText('HARGA PROMO SPESIAL:', 102, priceBoxY + 192);
+        ctx.fillText(theme.promoHeading, 102, priceBoxY + 192);
         ctx.font = "bold 64px 'Space Grotesk', sans-serif";
         ctx.fillText(formatRupiahStory(variant.promo_price), 102, priceBoxY + 256);
         ctx.textAlign = 'right';
@@ -985,7 +1338,7 @@ function renderStoryCanvas() {
         const footerY = 1600;
         ctx.fillStyle = '#111111';
         ctx.fillRect(68, footerY + 8, 948, 240);
-        ctx.fillStyle = '#F3ECE1';
+        ctx.fillStyle = theme.footerBg;
         ctx.fillRect(60, footerY, 948, 240);
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#111111';
@@ -996,17 +1349,17 @@ function renderStoryCanvas() {
         ctx.font = "bold 26px 'JetBrains Mono', monospace";
         ctx.fillText('CARA ORDER & KONSULTASI VIA WHATSAPP:', 86, footerY + 52);
 
-        ctx.fillStyle = '#16A34A';
+        ctx.fillStyle = theme.waColor;
         ctx.font = "bold 56px 'Space Grotesk', sans-serif";
         ctx.fillText('+ ' + STORE_WA, 86, footerY + 118);
 
         ctx.fillStyle = '#1A1A1A';
         ctx.font = "bold 22px 'Work Sans', sans-serif";
-        ctx.fillText(STORE_ADDRESS, 86, footerY + 168);
+        ctx.fillText(STORE_ADDRESS, 86, footerY + 168, 900);
 
-        ctx.fillStyle = '#78716C';
+        ctx.fillStyle = '#57534E';
         ctx.font = "bold 20px 'JetBrains Mono', monospace";
-        ctx.fillText('Pesan cepat tanpa ribet via link di bio / status WhatsApp!', 86, footerY + 210);
+        ctx.fillText(theme.footerNote, 86, footerY + 210, 900);
     }
 
     if (photoUrl && photoUrl !== '/images/placeholder.jpg') {
@@ -1062,7 +1415,7 @@ document.querySelectorAll('.story-btn').forEach((btn) => {
         currentStoryProduct.variants.forEach((v, idx) => {
             const opt = document.createElement('option');
             opt.value = idx;
-            opt.textContent = `${v.label} — ${formatRupiahStory(v.promo_price)}`;
+            opt.textContent = `${v.label} - ${formatRupiahStory(v.promo_price)}`;
             storyVariantSelect.appendChild(opt);
         });
 
@@ -1090,6 +1443,11 @@ document.querySelectorAll('.story-btn').forEach((btn) => {
     });
 });
 
+storyThemeSelect?.addEventListener('change', () => {
+    updateStoryCaption();
+    renderStoryCanvas();
+});
+
 storyVariantSelect?.addEventListener('change', () => {
     updateStoryCaption();
     renderStoryCanvas();
@@ -1106,10 +1464,11 @@ storyIncludeSpecs?.addEventListener('change', () => {
 btnDownloadStory?.addEventListener('click', () => {
     if (!currentStoryProduct || !storyCanvas) return;
     try {
+        const themeKey = storyThemeSelect?.value || 'default';
         const dataUrl = storyCanvas.toDataURL('image/png');
         const a = document.createElement('a');
         a.href = dataUrl;
-        a.download = `story-${currentStoryProduct.id}.png`;
+        a.download = `story-${currentStoryProduct.id}-${themeKey}.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1120,10 +1479,11 @@ btnDownloadStory?.addEventListener('click', () => {
 
 btnShareStory?.addEventListener('click', () => {
     if (!currentStoryProduct || !storyCanvas || !navigator.share) return;
+    const themeKey = storyThemeSelect?.value || 'default';
     storyCanvas.toBlob(async (blob) => {
         if (!blob) return;
         try {
-            const file = new File([blob], `story-${currentStoryProduct.id}.png`, { type: 'image/png' });
+            const file = new File([blob], `story-${currentStoryProduct.id}-${themeKey}.png`, { type: 'image/png' });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     title: `Promo ${currentStoryProduct.name} - ${STORE_NAME}`,
