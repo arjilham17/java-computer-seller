@@ -213,7 +213,7 @@
                 $hero = $catalog['hero_deal'];
                 $heroSave = max(0, (int) $hero['original_price'] - (int) $hero['promo_price']);
                 $heroSpecs = array_filter(array_map('trim', explode('•', $hero['subtitle'])));
-                $heroImage = $catalog['products'][0]['images'][0] ?? $catalog['products'][0]['image'] ?? 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80';
+                $heroImage = ($catalog['products'][0]['images'][0] ?? null) ?: (($catalog['products'][0]['image'] ?? null) ?: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80');
                 $heroWaText = "Halo {$catalog['store_name']}, saya ingin mengklaim Flash Deal {$hero['title']} ({$hero['subtitle']}) seharga Rp " . number_format($hero['promo_price'], 0, ',', '.') . ". Apakah stok masih tersedia?";
             @endphp
             <section class="pt-8 pb-12 lg:pt-14 lg:pb-16" id="promo">
@@ -398,7 +398,7 @@
                         @php
                             $firstVariant = $product['variants'][0];
                             $initialSave = max(0, (int) $firstVariant['original_price'] - (int) $firstVariant['promo_price']);
-                            $images = $product['images'] ?? [$product['image']];
+                            $images = array_values(array_filter($product['images'] ?? [$product['image'] ?? '']));
                             $carouselId = 'carousel-' . $product['id'];
                             $initialText = implode("\n", [
                                 "Halo {$catalog['store_name']}, saya ingin memesan:",
@@ -444,11 +444,17 @@
                                             <span class="visually-hidden">Berikutnya</span>
                                         </button>
                                     </div>
-                                @else
+                                @elseif (count($images) === 1)
                                     <img class="w-full h-48 object-cover border border-canvas-border"
                                          alt="{{ $product['name'] }}"
                                          src="{{ $images[0] }}"
                                          loading="lazy"/>
+                                @else
+                                    <div class="w-full h-48 border border-canvas-border bg-surface-container-low flex flex-col items-center justify-center text-center p-4">
+                                        <span class="material-symbols-outlined text-4xl text-wood-ochre-dark mb-1" aria-hidden="true">devices</span>
+                                        <span class="font-label-code text-label-code font-bold uppercase text-slate-charcoal">{{ $product['brand'] }} • {{ $product['category'] }}</span>
+                                        <span class="font-label-spec text-label-spec uppercase text-on-surface-variant mt-0.5">[FOTO MENYUSUL]</span>
+                                    </div>
                                 @endif
                                 <div class="flex items-center justify-between mt-2 pt-2 border-t border-canvas-border font-label-spec text-label-spec font-bold uppercase">
                                     <span class="text-on-surface-variant">{{ $product['category'] }} • {{ $product['brand'] }}</span>

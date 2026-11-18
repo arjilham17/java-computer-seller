@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin — {{ $catalog['store_name'] ?? 'Java Computer Seller' }}</title>
+    <title>Login Admin: {{ $catalog['store_name'] ?? 'Java Computer Seller' }}</title>
     <link rel="icon" type="image/x-icon" href="{{ !empty($catalog['logo']) ? $catalog['logo'] : '/favicon.ico' }}">
     <link rel="icon" type="image/svg+xml" href="{{ !empty($catalog['logo']) ? $catalog['logo'] : '/favicon.svg' }}">
     <link rel="apple-touch-icon" href="{{ !empty($catalog['logo']) ? $catalog['logo'] : '/apple-touch-icon.png' }}">
@@ -19,6 +19,7 @@
             min-height: 100vh;
         }
         h1, .font-headline { font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; }
+        a[href], button, input[type="submit"], select, label[for] { cursor: pointer; }
         .brutal-card {
             background-color: #ffffff;
             border: 2.5px solid #111111;
@@ -51,10 +52,27 @@
             transform: translate(-1px, -1px);
             box-shadow: 4px 4px 0px #111111;
         }
+        .brutal-toggle-btn {
+            background-color: #ffffff;
+            color: #1A1A1A;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 2px solid #111111;
+            border-left: 0;
+            border-radius: 0;
+            padding: 0 0.75rem;
+        }
+        .brutal-toggle-btn:hover, .brutal-toggle-btn:focus-visible {
+            background-color: #E5AC67;
+            color: #1A1A1A;
+            outline: 2px solid #111111;
+        }
     </style>
 </head>
 <body class="d-flex align-items-center">
-<div class="container">
+<main class="container">
     <div class="row justify-content-center">
         <div class="col-md-5 col-lg-4">
             <div class="brutal-card p-4">
@@ -63,7 +81,7 @@
                 <p class="text-secondary small mb-4">Kelola isi konten landing page Java Computer Seller.</p>
 
                 @if ($errors->any())
-                    <div class="alert alert-danger py-2 small rounded-0 border-2 border-dark">
+                    <div class="alert alert-danger py-2 small rounded-0 border-2 border-dark" role="alert">
                         {{ $errors->first() }}
                     </div>
                 @endif
@@ -71,8 +89,11 @@
                 <form method="POST" action="/admin/login">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-uppercase" style="font-family:'JetBrains Mono',monospace;">Password Admin</label>
-                        <input type="password" name="password" class="form-control brutal-input" required autofocus>
+                        <label for="login-password" class="form-label small fw-bold text-uppercase" style="font-family:'JetBrains Mono',monospace;">Password Admin</label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="login-password" class="form-control brutal-input" autocomplete="current-password" required autofocus>
+                            <button type="button" class="brutal-toggle-btn" id="toggle-login-password" aria-label="Tampilkan password" aria-pressed="false">Lihat</button>
+                        </div>
                     </div>
                     <button type="submit" class="btn brutal-btn w-100 py-2">Masuk ke Dashboard</button>
                 </form>
@@ -83,6 +104,16 @@
             </div>
         </div>
     </div>
-</div>
+</main>
+<script>
+document.getElementById('toggle-login-password')?.addEventListener('click', function () {
+    const input = document.getElementById('login-password');
+    if (!input) return;
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    this.textContent = isHidden ? 'Tutup' : 'Lihat';
+    this.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+});
+</script>
 </body>
 </html>

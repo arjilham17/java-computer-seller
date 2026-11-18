@@ -131,12 +131,13 @@ class LandingPageTest extends TestCase
 
         $template = $this->get('/admin/products/template');
         $template->assertStatus(200);
-        $this->assertStringContainsString('id,name,brand,category,badge,image,specs_text,variants_text', $template->getContent());
+        $this->assertStringContainsString('name,brand,category,badge,specs_text,variants_text', $template->getContent());
 
+        // Import menggunakan template ringkas 6 kolom tanpa ID dan tanpa foto
         $csv = implode("\n", [
-            'id,name,brand,category,badge,image,specs_text,variants_text',
-            '"laptop-hp-14s","HP 14s Ryzen 5","HP","Laptop","Promo Kampus","https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80","Layar FHD;Garansi 2 Tahun","8GB / 512GB SSD | 6299000 | 6899000;16GB / 512GB SSD | 6999000 | 7599000"',
-            '"aksesoris-mouse-g102","Logitech G102 Lightsync","Logitech","Aksesoris","Best Seller","https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80","Sensor 8000 DPI;RGB Lightsync","Hitam | 239000 | 299000;Putih | 245000 | 299000"',
+            'name,brand,category,badge,specs_text,variants_text',
+            '"HP 14s Ryzen 5","HP","laptop","Promo Kampus","Layar FHD;Garansi 2 Tahun","8GB / 512GB SSD | 6299000 | 6899000;16GB / 512GB SSD | 6999000 | 7599000"',
+            '"Logitech G102 Lightsync","Logitech","Aksesoris","","Sensor 8000 DPI;RGB Lightsync","Hitam | 239000;Putih | 245000 | 299000"',
         ]);
 
         $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('produk-massal.csv', $csv);
@@ -147,8 +148,33 @@ class LandingPageTest extends TestCase
         $home = $this->get('/');
         $home->assertSee('HP 14s Ryzen 5');
         $home->assertSee('Logitech G102 Lightsync');
+        $home->assertSee('[FOTO MENYUSUL]');
 
-        $badCsv = "id,name,brand,category,badge,image,specs_text,variants_text\nbad-id,Produk,Brand,KategoriSalah,Badge,https://example.com/a.jpg,Spec,Varian | 1000 | 2000";
+        $adminDash = $this->get('/admin');
+        $adminDash->assertSee('BELUM ADA FOTO');
+        $adminDash->assertSee('Edit / +Foto');
+
+        // Upload foto menyusul setelah import selesai
+        $tinyPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        $laterPhoto = \Illuminate\Http\UploadedFile::fake()->createWithContent('hp-14s.png', $tinyPng);
+        $this->post('/admin/products', [
+            'original_id' => 'laptop-hp-14s-ryzen-5',
+            'id' => 'laptop-hp-14s-ryzen-5',
+            'name' => 'HP 14s Ryzen 5',
+            'brand' => 'HP',
+            'category' => 'Laptop',
+            'badge' => 'Promo Kampus',
+            'photos' => [$laterPhoto],
+            'specs_text' => "Layar FHD\nGaransi 2 Tahun",
+            'variants_text' => "8GB / 512GB SSD | 6299000 | 6899000",
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        $this->get('/')->assertSee('/uploads/products/laptop-hp-14s-ryzen-5-', false);
+        foreach (glob(public_path('uploads/products/laptop-hp-14s-ryzen-5-*')) ?: [] as $f) {
+            @unlink($f);
+        }
+
+        $badCsv = "name,brand,category,badge,specs_text,variants_text\nProduk,Brand,KategoriSalah,Badge,Spec,Varian | 1000 | 2000";
         $badFile = \Illuminate\Http\UploadedFile::fake()->createWithContent('bad.csv', $badCsv);
         $this->post('/admin/products/import', ['file' => $badFile])
             ->assertRedirect('/admin')
@@ -510,6 +536,17 @@ class LandingPageTest extends TestCase
         }
         $admin->assertSee('Chat & Order WhatsApp: ${STORE_WA}', false);
         $admin->assertSee('captionHook', false);
+        $admin->assertSee('id="settingsTabs"', false);
+        $admin->assertSee('id="admin-table-search"', false);
+        $admin->assertSee('id="admin-table-cat"', false);
+        $admin->assertSee('id="admin-table-status"', false);
+        $admin->assertSee('id="edit-mode-banner"', false);
+        $admin->assertSee('updateAutoSlug', false);
+        $admin->assertSee('pw-toggle-btn', false);
+
+        $loginPage = $this->get('/admin/login');
+        $loginPage->assertStatus(200);
+        $loginPage->assertSee('id="toggle-login-password"', false);
     }
 
     public function test_admin_can_change_password_and_plaintext_password_is_not_stored(): void

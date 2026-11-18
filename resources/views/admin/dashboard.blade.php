@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin — {{ $catalog['store_name'] }}</title>
+    <title>Dashboard Admin: {{ $catalog['store_name'] }}</title>
     <link rel="icon" type="image/x-icon" href="{{ !empty($catalog['logo']) ? $catalog['logo'] : '/favicon.ico' }}">
     <link rel="icon" type="image/svg+xml" href="{{ !empty($catalog['logo']) ? $catalog['logo'] : '/favicon.svg' }}">
     <link rel="apple-touch-icon" href="{{ !empty($catalog['logo']) ? $catalog['logo'] : '/apple-touch-icon.png' }}">
@@ -20,6 +20,9 @@
         h1, h2, h3, .font-headline {
             font-family: 'Space Grotesk', sans-serif;
             text-transform: uppercase;
+        }
+        a[href], button, input[type="submit"], input[type="reset"], input[type="checkbox"], select, label[for] {
+            cursor: pointer;
         }
         .brutal-nav {
             background-color: #F3ECE1;
@@ -74,29 +77,65 @@
             background-color: #B87834;
             color: #ffffff;
         }
+        .brutal-tabs .nav-link {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            color: #1A1A1A;
+            background-color: #F3ECE1;
+            border: 2px solid #111111;
+            border-radius: 0;
+            padding: 0.45rem 0.65rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        .brutal-tabs .nav-link.active {
+            background-color: #E5AC67;
+            color: #1A1A1A;
+            box-shadow: 2px 2px 0px #111111;
+        }
+        .pw-toggle-btn {
+            background-color: #ffffff;
+            color: #1A1A1A;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 2px solid #111111;
+            border-left: 0;
+            border-radius: 0;
+            padding: 0 0.65rem;
+        }
+        .pw-toggle-btn:hover, .pw-toggle-btn:focus-visible {
+            background-color: #E5AC67;
+            outline: 2px solid #111111;
+        }
     </style>
 </head>
 <body>
-<nav class="navbar brutal-nav py-3 mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div class="fw-bold font-headline fs-5">Dashboard Admin — {{ $catalog['store_name'] }}</div>
-        <div class="d-flex gap-2">
-            <a href="/admin/backup" class="btn btn-light btn-sm" title="Download backup data katalog JSON">Backup JSON</a>
-            <a href="/" target="_blank" class="btn btn-primary btn-sm">Lihat Landing Page</a>
-            <form method="POST" action="/admin/logout" class="m-0">
-                @csrf
-                <button type="submit" class="btn btn-light btn-sm">Logout</button>
-            </form>
+<header>
+    <nav class="navbar brutal-nav py-3 mb-4">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h1 class="fw-bold font-headline fs-5 mb-0">Dashboard Admin: {{ $catalog['store_name'] }}</h1>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/admin/backup" class="btn btn-light btn-sm" title="Download backup data katalog JSON">Backup JSON</a>
+                <a href="/" target="_blank" class="btn btn-primary btn-sm">Lihat Landing Page</a>
+                <form method="POST" action="/admin/logout" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-light btn-sm">Logout</button>
+                </form>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+</header>
 
-<div class="container pb-5">
+<main class="container pb-5">
     @if (session('status'))
-        <div class="alert alert-success rounded-0 border-2 border-dark fw-semibold">{{ session('status') }}</div>
+        <div class="alert alert-success rounded-0 border-2 border-dark fw-semibold" role="status">{{ session('status') }}</div>
     @endif
     @if ($errors->any())
-        <div class="alert alert-danger rounded-0 border-2 border-dark">
+        <div class="alert alert-danger rounded-0 border-2 border-dark" role="alert">
             <ul class="mb-0">
                 @foreach ($errors->all() as $err)
                     <li>{{ $err }}</li>
@@ -105,145 +144,164 @@
         </div>
     @endif
 
+    @php
+        $aboutFeaturesText = implode("\n", array_map(function($f) {
+            $line = ($f['title'] ?? '') . ' | ' . ($f['desc'] ?? '');
+            if (!empty($f['icon'])) {
+                $line .= ' | ' . $f['icon'];
+            }
+            return $line;
+        }, $catalog['about_features'] ?? []));
+
+        $faqsText = implode("\n", array_map(function($faq) {
+            return ($faq['q'] ?? '') . ' | ' . ($faq['a'] ?? '');
+        }, $catalog['faqs'] ?? []));
+    @endphp
+
     <div class="row g-4">
         <div class="col-lg-5">
             <div class="brutal-card p-4 mb-4">
-                <h2 class="h5 fw-bold mb-3">1. Profil Toko & Hero Flash Deal</h2>
-                <form method="POST" action="/admin/settings" enctype="multipart/form-data">
+                <h2 class="h5 fw-bold mb-3">1. Profil Toko &amp; Konten Landing</h2>
+                <ul class="nav brutal-tabs mb-3" id="settingsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-profil-btn" data-bs-toggle="tab" data-bs-target="#tab-profil" type="button" role="tab" aria-controls="tab-profil" aria-selected="true">Profil &amp; Sosmed</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-hero-btn" data-bs-toggle="tab" data-bs-target="#tab-hero" type="button" role="tab" aria-controls="tab-hero" aria-selected="false">Hero Promo</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-konten-btn" data-bs-toggle="tab" data-bs-target="#tab-konten" type="button" role="tab" aria-controls="tab-konten" aria-selected="false">Tentang &amp; FAQ</button>
+                    </li>
+                </ul>
+
+                <form method="POST" action="/admin/settings" enctype="multipart/form-data" id="settings-form">
                     @csrf
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold" for="f-logo">Logo Toko (PNG/JPG/WEBP, maks 2MB)</label>
-                        <div class="d-flex align-items-center gap-2">
-                            @if (!empty($catalog['logo']))
-                                <img src="{{ $catalog['logo'] }}" alt="Logo saat ini" style="height: 40px; width: auto;" class="border border-2 border-dark p-1 bg-white">
-                            @else
-                                <span class="badge p-2 border border-2 border-dark rounded-0" style="background:#B87834;color:#fff;">JC</span>
-                            @endif
-                            <input type="file" name="logo" id="f-logo" class="form-control form-control-sm" accept="image/png,image/jpeg,image/webp">
-                        </div>
-                        @if (!empty($catalog['logo']))
-                            <div class="form-check mt-1">
-                                <input class="form-check-input" type="checkbox" name="remove_logo" value="1" id="f-remove-logo">
-                                <label class="form-check-label small" for="f-remove-logo">Hapus logo (kembali ke badge JC)</label>
+                    <div class="tab-content">
+                        <!-- TAB 1: PROFIL & SOSMED -->
+                        <div class="tab-pane fade show active" id="tab-profil" role="tabpanel" aria-labelledby="tab-profil-btn">
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-logo">Logo Toko (PNG/JPG/WEBP, maks 2MB)</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!empty($catalog['logo']))
+                                        <img src="{{ $catalog['logo'] }}" alt="Logo saat ini" width="40" height="40" style="height: 40px; width: auto;" class="border border-2 border-dark p-1 bg-white">
+                                    @else
+                                        <span class="badge p-2 border border-2 border-dark rounded-0" style="background:#B87834;color:#fff;">JC</span>
+                                    @endif
+                                    <input type="file" name="logo" id="f-logo" class="form-control form-control-sm" accept="image/png,image/jpeg,image/webp">
+                                </div>
+                                @if (!empty($catalog['logo']))
+                                    <div class="form-check mt-1">
+                                        <input class="form-check-input" type="checkbox" name="remove_logo" value="1" id="f-remove-logo">
+                                        <label class="form-check-label small" for="f-remove-logo">Hapus logo (kembali ke badge JC)</label>
+                                    </div>
+                                @endif
                             </div>
-                        @endif
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Nama Toko</label>
-                        <input type="text" name="store_name" class="form-control form-control-sm" value="{{ $catalog['store_name'] }}" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Tagline</label>
-                        <input type="text" name="tagline" class="form-control form-control-sm" value="{{ $catalog['tagline'] }}" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Nomor WhatsApp (Format 628...)</label>
-                        <input type="text" name="whatsapp_number" class="form-control form-control-sm" value="{{ $catalog['whatsapp_number'] }}" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Alamat Toko</label>
-                        <input type="text" name="address" class="form-control form-control-sm" value="{{ $catalog['address'] }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Jam Operasional</label>
-                        <input type="text" name="hours" class="form-control form-control-sm" value="{{ $catalog['hours'] }}" required>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Instagram URL</label>
-                        <input type="url" name="instagram_url" class="form-control form-control-sm" placeholder="https://instagram.com/namatoko" value="{{ $catalog['instagram_url'] ?? '' }}">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">TikTok URL</label>
-                        <input type="url" name="tiktok_url" class="form-control form-control-sm" placeholder="https://tiktok.com/@namatoko" value="{{ $catalog['tiktok_url'] ?? '' }}">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Facebook URL</label>
-                        <input type="url" name="facebook_url" class="form-control form-control-sm" placeholder="https://facebook.com/namatoko" value="{{ $catalog['facebook_url'] ?? '' }}">
-                    </div>
-
-                    <hr class="border-2 border-dark opacity-100">
-                    <h3 class="h6 fw-bold mb-2">Kartu Hero Flash Deal</h3>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Badge Promo</label>
-                        <input type="text" name="hero_badge" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['badge'] }}" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Judul Produk Hero</label>
-                        <input type="text" name="hero_title" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['title'] }}" required>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Subjudul Spesifikasi</label>
-                        <input type="text" name="hero_subtitle" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['subtitle'] }}" required>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small fw-semibold">Harga Coret (Rp)</label>
-                            <input type="number" name="hero_original_price" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['original_price'] }}" required>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-store-name">Nama Toko</label>
+                                <input type="text" name="store_name" id="f-store-name" class="form-control form-control-sm" value="{{ old('store_name', $catalog['store_name']) }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-tagline">Tagline</label>
+                                <input type="text" name="tagline" id="f-tagline" class="form-control form-control-sm" value="{{ old('tagline', $catalog['tagline']) }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-wa-number">Nomor WhatsApp (Format 628...)</label>
+                                <input type="text" name="whatsapp_number" id="f-wa-number" class="form-control form-control-sm" value="{{ old('whatsapp_number', $catalog['whatsapp_number']) }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-address">Alamat Toko</label>
+                                <input type="text" name="address" id="f-address" class="form-control form-control-sm" value="{{ old('address', $catalog['address']) }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold" for="f-hours">Jam Operasional</label>
+                                <input type="text" name="hours" id="f-hours" class="form-control form-control-sm" value="{{ old('hours', $catalog['hours']) }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-ig-url">Instagram URL</label>
+                                <input type="url" name="instagram_url" id="f-ig-url" class="form-control form-control-sm" placeholder="https://instagram.com/namatoko" value="{{ old('instagram_url', $catalog['instagram_url'] ?? '') }}">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-tiktok-url">TikTok URL</label>
+                                <input type="url" name="tiktok_url" id="f-tiktok-url" class="form-control form-control-sm" placeholder="https://tiktok.com/@namatoko" value="{{ old('tiktok_url', $catalog['tiktok_url'] ?? '') }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold" for="f-fb-url">Facebook URL</label>
+                                <input type="url" name="facebook_url" id="f-fb-url" class="form-control form-control-sm" placeholder="https://facebook.com/namatoko" value="{{ old('facebook_url', $catalog['facebook_url'] ?? '') }}">
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-semibold">Harga Promo (Rp)</label>
-                            <input type="number" name="hero_promo_price" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['promo_price'] }}" required>
+
+                        <!-- TAB 2: HERO PROMO -->
+                        <div class="tab-pane fade" id="tab-hero" role="tabpanel" aria-labelledby="tab-hero-btn">
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-hero-badge">Badge Promo</label>
+                                <input type="text" name="hero_badge" id="f-hero-badge" class="form-control form-control-sm" value="{{ old('hero_badge', $catalog['hero_deal']['badge']) }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-hero-title">Judul Produk Hero</label>
+                                <input type="text" name="hero_title" id="f-hero-title" class="form-control form-control-sm" value="{{ old('hero_title', $catalog['hero_deal']['title']) }}" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-hero-subtitle">Subjudul Spesifikasi</label>
+                                <input type="text" name="hero_subtitle" id="f-hero-subtitle" class="form-control form-control-sm" value="{{ old('hero_subtitle', $catalog['hero_deal']['subtitle']) }}" required>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold" for="f-hero-orig">Harga Coret (Rp)</label>
+                                    <input type="number" name="hero_original_price" id="f-hero-orig" class="form-control form-control-sm" value="{{ old('hero_original_price', $catalog['hero_deal']['original_price']) }}" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold" for="f-hero-promo">Harga Promo (Rp)</label>
+                                    <input type="number" name="hero_promo_price" id="f-hero-promo" class="form-control form-control-sm" value="{{ old('hero_promo_price', $catalog['hero_deal']['promo_price']) }}" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold" for="f-hero-bonus">Info Bonus / Hemat</label>
+                                <input type="text" name="hero_bonus" id="f-hero-bonus" class="form-control form-control-sm" value="{{ old('hero_bonus', $catalog['hero_deal']['bonus']) }}" required>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: TENTANG & FAQ -->
+                        <div class="tab-pane fade" id="tab-konten" role="tabpanel" aria-labelledby="tab-konten-btn">
+                            <h3 class="h6 fw-bold mb-2">Konten #tentang-kami</h3>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-about-title">Judul Section Keunggulan</label>
+                                <input type="text" name="about_title" id="f-about-title" class="form-control form-control-sm" value="{{ old('about_title', $catalog['about_title'] ?? '') }}">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-about-subtitle">Deskripsi Section</label>
+                                <textarea name="about_subtitle" id="f-about-subtitle" rows="2" class="form-control form-control-sm">{{ old('about_subtitle', $catalog['about_subtitle'] ?? '') }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold" for="f-about-features">Poin Keunggulan (1 baris per item: <code>Judul | Deskripsi | Icon</code>)</label>
+                                <textarea name="about_features_text" id="f-about-features" rows="3" class="form-control form-control-sm font-monospace small">{{ old('about_features_text', $aboutFeaturesText) }}</textarea>
+                            </div>
+
+                            <hr class="border-2 border-dark opacity-100">
+                            <h3 class="h6 fw-bold mb-2">Konten #kontak &amp; FAQ</h3>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-contact-title">Judul Section Kontak</label>
+                                <input type="text" name="contact_title" id="f-contact-title" class="form-control form-control-sm" value="{{ old('contact_title', $catalog['contact_title'] ?? '') }}">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-contact-subtitle">Deskripsi Section Kontak</label>
+                                <textarea name="contact_subtitle" id="f-contact-subtitle" rows="2" class="form-control form-control-sm">{{ old('contact_subtitle', $catalog['contact_subtitle'] ?? '') }}</textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-map-image">URL Peta / Embed Google Maps</label>
+                                <input type="text" name="map_image" id="f-map-image" class="form-control form-control-sm" value="{{ old('map_image', $catalog['map_image'] ?? '') }}" placeholder="https://maps.google.com/maps?... atau URL gambar">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-map-link">Link Tautan Google Maps</label>
+                                <input type="text" name="map_link" id="f-map-link" class="form-control form-control-sm" value="{{ old('map_link', $catalog['map_link'] ?? 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8') }}" placeholder="https://maps.app.goo.gl/...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold" for="f-faq-text">Daftar FAQ (1 baris per pertanyaan: <code>Pertanyaan | Jawaban</code>)</label>
+                                <textarea name="faq_text" id="f-faq-text" rows="3" class="form-control form-control-sm font-monospace small">{{ old('faq_text', $faqsText) }}</textarea>
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Info Bonus / Hemat</label>
-                        <input type="text" name="hero_bonus" class="form-control form-control-sm" value="{{ $catalog['hero_deal']['bonus'] }}" required>
-                    </div>
 
-                    @php
-                        $aboutFeaturesText = implode("\n", array_map(function($f) {
-                            $line = ($f['title'] ?? '') . ' | ' . ($f['desc'] ?? '');
-                            if (!empty($f['icon'])) {
-                                $line .= ' | ' . $f['icon'];
-                            }
-                            return $line;
-                        }, $catalog['about_features'] ?? []));
-
-                        $faqsText = implode("\n", array_map(function($faq) {
-                            return ($faq['q'] ?? '') . ' | ' . ($faq['a'] ?? '');
-                        }, $catalog['faqs'] ?? []));
-                    @endphp
-
-                    <hr class="border-2 border-dark opacity-100">
-                    <h3 class="h6 fw-bold mb-2">Konten #tentang-kami</h3>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Judul Section Keunggulan</label>
-                        <input type="text" name="about_title" class="form-control form-control-sm" value="{{ $catalog['about_title'] ?? '' }}">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Deskripsi Section</label>
-                        <textarea name="about_subtitle" rows="2" class="form-control form-control-sm">{{ $catalog['about_subtitle'] ?? '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Poin Keunggulan (1 baris per item: <code>Judul | Deskripsi | Icon</code>)</label>
-                        <textarea name="about_features_text" rows="4" class="form-control form-control-sm font-monospace small">{{ $aboutFeaturesText }}</textarea>
-                    </div>
-
-                    <hr class="border-2 border-dark opacity-100">
-                    <h3 class="h6 fw-bold mb-2">Konten #kontak &amp; FAQ</h3>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Judul Section Kontak</label>
-                        <input type="text" name="contact_title" class="form-control form-control-sm" value="{{ $catalog['contact_title'] ?? '' }}">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Deskripsi Section Kontak</label>
-                        <textarea name="contact_subtitle" rows="2" class="form-control form-control-sm">{{ $catalog['contact_subtitle'] ?? '' }}</textarea>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">URL Peta / Embed Google Maps</label>
-                        <input type="text" name="map_image" class="form-control form-control-sm" value="{{ $catalog['map_image'] ?? '' }}" placeholder="https://maps.google.com/maps?... atau URL gambar">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Link Tautan Google Maps</label>
-                        <input type="text" name="map_link" class="form-control form-control-sm" value="{{ $catalog['map_link'] ?? 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8' }}" placeholder="https://maps.app.goo.gl/...">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Daftar FAQ (1 baris per pertanyaan: <code>Pertanyaan | Jawaban</code>)</label>
-                        <textarea name="faq_text" rows="4" class="form-control form-control-sm font-monospace small">{{ $faqsText }}</textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 py-2">Simpan Pengaturan &amp; Konten</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2 mt-1">Simpan Pengaturan &amp; Konten</button>
                 </form>
             </div>
 
@@ -254,15 +312,24 @@
                     @csrf
                     <div class="mb-2">
                         <label class="form-label small fw-semibold" for="f-current-password">Password Saat Ini</label>
-                        <input type="password" name="current_password" id="f-current-password" class="form-control form-control-sm" autocomplete="current-password" required>
+                        <div class="input-group input-group-sm">
+                            <input type="password" name="current_password" id="f-current-password" class="form-control form-control-sm" autocomplete="current-password" required>
+                            <button type="button" class="pw-toggle-btn" data-target="f-current-password" aria-label="Tampilkan password saat ini" aria-pressed="false">Lihat</button>
+                        </div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold" for="f-new-password">Password Baru (Minimal 8 Karakter)</label>
-                        <input type="password" name="new_password" id="f-new-password" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                        <div class="input-group input-group-sm">
+                            <input type="password" name="new_password" id="f-new-password" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                            <button type="button" class="pw-toggle-btn" data-target="f-new-password" aria-label="Tampilkan password baru" aria-pressed="false">Lihat</button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold" for="f-new-password-confirm">Konfirmasi Password Baru</label>
-                        <input type="password" name="new_password_confirmation" id="f-new-password-confirm" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                        <div class="input-group input-group-sm">
+                            <input type="password" name="new_password_confirmation" id="f-new-password-confirm" class="form-control form-control-sm" minlength="8" autocomplete="new-password" required>
+                            <button type="button" class="pw-toggle-btn" data-target="f-new-password-confirm" aria-label="Tampilkan konfirmasi password baru" aria-pressed="false">Lihat</button>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 py-2">Perbarui Password Admin</button>
                 </form>
@@ -273,16 +340,22 @@
             <div class="brutal-card p-4 mb-4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                     <h2 class="h5 fw-bold mb-0">2. Posting Massal (Template Excel)</h2>
-                    <a href="/admin/products/template" class="btn btn-light btn-sm">
-                        Download Template Excel (.csv)
-                    </a>
+                    <div class="d-flex flex-wrap gap-1">
+                        <button type="button" id="btn-download-xlsx" class="btn btn-warning btn-sm">
+                            Download Template (.xlsx)
+                        </button>
+                        <a href="/admin/products/template" class="btn btn-light btn-sm">
+                            Template (.csv)
+                        </a>
+                    </div>
                 </div>
-                <p class="text-secondary small mb-3">
-                    Unduh template, isi banyak produk sekaligus di Microsoft Excel (simpan sebagai <code>.xlsx</code> atau <code>.csv</code>), lalu unggah di sini. Pisahkan beberapa spesifikasi/varian dengan titik koma (<code>;</code>).
+                <p class="text-secondary small mb-2">
+                    Cukup isi 6 kolom mudah: <code>name</code>, <code>brand</code>, <code>category</code>, <code>badge</code>, <code>specs_text</code>, dan <code>variants_text</code>. <strong>Tanpa perlu isi ID dan tanpa foto terlebih dahulu!</strong> Setelah selesai import, Anda bisa upload foto produk menyusul lewat tombol <strong>Edit / +Foto</strong> pada tabel di bawah.
                 </p>
                 <form method="POST" action="/admin/products/import" enctype="multipart/form-data" id="bulk-form">
                     @csrf
                     <input type="hidden" name="csv_payload" id="csv-payload">
+                    <label for="bulk-file" class="visually-hidden">Pilih file template Excel atau CSV</label>
                     <div class="input-group input-group-sm">
                         <input type="file" name="file" id="bulk-file" class="form-control" accept=".csv,.xlsx,.xls" required>
                         <button type="submit" class="btn btn-primary px-3">Import Produk Massal</button>
@@ -291,100 +364,163 @@
             </div>
 
             <div class="brutal-card p-4 mb-4">
-                <h2 class="h5 fw-bold mb-3">3. Tambah / Edit Produk Satuan</h2>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h2 class="h5 fw-bold mb-0" id="product-form-heading">3. Tambah / Edit Produk Satuan</h2>
+                    <span class="badge border border-dark rounded-0 font-monospace text-dark" id="product-form-mode-badge" style="background:#F3ECE1;">MODE TAMBAH BARU</span>
+                </div>
+
+                <div id="edit-mode-banner" class="alert alert-warning rounded-0 border-2 border-dark py-2 px-3 mb-3 d-none d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+                    <div class="small fw-bold">
+                        Sedang mengedit produk: <span id="edit-mode-product-name" class="text-decoration-underline"></span>
+                    </div>
+                    <button type="button" id="btn-cancel-edit" class="btn btn-light btn-sm py-0 px-2">Batal Edit</button>
+                </div>
+
                 <form method="POST" action="/admin/products" enctype="multipart/form-data" id="product-form">
                     @csrf
-                    <input type="hidden" name="original_id" id="f-original-id">
+                    <input type="hidden" name="original_id" id="f-original-id" value="{{ old('original_id') }}">
+                    <input type="hidden" name="image" id="f-image" value="{{ old('image') }}">
                     <div class="row g-2 mb-2">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">ID / Slug Produk</label>
-                            <input type="text" name="id" id="f-id" class="form-control form-control-sm" placeholder="laptop-acer-aspire" required>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-semibold" for="f-name">Nama Produk</label>
+                            <input type="text" name="name" id="f-name" class="form-control form-control-sm" placeholder="Contoh: Lenovo IdeaPad Slim 3 14" value="{{ old('name') }}" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Kategori</label>
+                            <label class="form-label small fw-semibold" for="f-brand">Merek</label>
+                            <input type="text" name="brand" id="f-brand" class="form-control form-control-sm" placeholder="Lenovo / ASUS / Epson" value="{{ old('brand') }}" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="f-id">ID / Slug Produk (Otomatis)</label>
+                            <input type="text" name="id" id="f-id" class="form-control form-control-sm font-monospace" placeholder="laptop-lenovo-ideapad" value="{{ old('id') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold" for="f-category">Kategori</label>
                             <select name="category" id="f-category" class="form-select form-select-sm" required>
                                 @foreach (['Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'] as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                    <option value="{{ $cat }}" {{ old('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Merek</label>
-                            <input type="text" name="brand" id="f-brand" class="form-control form-control-sm" placeholder="ASUS / Epson" required>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-8">
-                            <label class="form-label small fw-semibold">Nama Produk</label>
-                            <input type="text" name="name" id="f-name" class="form-control form-control-sm" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold">Badge Kartu</label>
-                            <input type="text" name="badge" id="f-badge" class="form-control form-control-sm" placeholder="Best Seller" required>
+                            <label class="form-label small fw-semibold" for="f-badge">Badge Kartu</label>
+                            <input type="text" name="badge" id="f-badge" class="form-control form-control-sm" placeholder="Best Seller / Promo" value="{{ old('badge') }}" required>
                         </div>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Upload Foto Produk (Bisa pilih lebih dari 1 foto)</label>
+                        <label class="form-label small fw-semibold" for="f-photos">Upload Foto Produk (Bisa pilih lebih dari 1 foto)</label>
                         <input type="file" name="photos[]" id="f-photos" class="form-control form-control-sm" accept="image/*" multiple>
                         <div class="form-text text-muted text-[11px] mt-1">Foto &gt; 4096 KB (4 MB) otomatis dikompres sebelum upload agar hemat bandwidth dan lancar.</div>
                         <div id="photo-preview" class="d-flex flex-wrap gap-2 mt-2"></div>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold text-secondary">Atau URL/Path Foto (Opsional jika sudah upload file; pisahkan dengan <code>;</code> untuk multi-foto)</label>
-                        <input type="text" name="image" id="f-image" class="form-control form-control-sm" placeholder="https://images.unsplash.com/...">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small fw-semibold">Poin Spesifikasi (1 baris = 1 badge spesifikasi)</label>
-                        <textarea name="specs_text" id="f-specs" rows="2" class="form-control form-control-sm" placeholder="Garansi Resmi 2 Tahun&#10;Layar FHD IPS" required></textarea>
+                        <label class="form-label small fw-semibold" for="f-specs">Poin Spesifikasi (1 baris = 1 badge spesifikasi)</label>
+                        <textarea name="specs_text" id="f-specs" rows="2" class="form-control form-control-sm" placeholder="Garansi Resmi 2 Tahun&#10;Layar FHD IPS" required>{{ old('specs_text') }}</textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Daftar Varian (Format per baris: <code>Label Varian | Harga Promo | Harga Coret</code>)</label>
-                        <textarea name="variants_text" id="f-variants" rows="3" class="form-control form-control-sm font-monospace" placeholder="RAM 8GB / SSD 256GB | 5899000 | 6499000&#10;RAM 16GB / SSD 512GB | 6899000 | 7499000" required></textarea>
+                        <label class="form-label small fw-semibold" for="f-variants">Daftar Varian (Format per baris: <code>Label Varian | Harga Promo | Harga Coret</code>)</label>
+                        <textarea name="variants_text" id="f-variants" rows="3" class="form-control form-control-sm font-monospace" placeholder="RAM 8GB / SSD 256GB | 5899000 | 6499000&#10;RAM 16GB / SSD 512GB | 6899000 | 7499000" required>{{ old('variants_text') }}</textarea>
                     </div>
                     <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="is_sold_out" value="1" id="f-sold-out">
+                        <input class="form-check-input" type="checkbox" name="is_sold_out" value="1" id="f-sold-out" {{ old('is_sold_out') ? 'checked' : '' }}>
                         <label class="form-check-label small fw-semibold" for="f-sold-out">Tandai Sold Out (Stok Habis)</label>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex flex-wrap gap-2">
                         <button type="submit" id="btn-save-product" class="btn btn-success btn-sm px-4 py-2">Simpan Produk</button>
-                        <button type="reset" class="btn btn-light btn-sm">Reset Form</button>
+                        <button type="button" id="btn-reset-product" class="btn btn-light btn-sm px-3 py-2">Reset Form</button>
                     </div>
                 </form>
             </div>
 
             <div class="brutal-card p-4">
-                <h2 class="h5 fw-bold mb-3">4. Daftar Produk Aktif ({{ count($catalog['products']) }})</h2>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h2 class="h5 fw-bold mb-0">4. Daftar Produk Aktif (<span id="admin-product-count">{{ count($catalog['products']) }}</span>)</h2>
+                </div>
+
+                <!-- Filter & Search Bar Tabel Admin -->
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                        <label for="admin-table-search" class="visually-hidden">Cari produk di tabel</label>
+                        <input type="search" id="admin-table-search" class="form-control form-control-sm" placeholder="Cari nama, merek, atau ID produk...">
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <label for="admin-table-cat" class="visually-hidden">Filter kategori produk</label>
+                        <select id="admin-table-cat" class="form-select form-select-sm">
+                            <option value="">Semua Kategori</option>
+                            @foreach (['Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'] as $cat)
+                                <option value="{{ $cat }}">{{ $cat }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-6 col-sm-3">
+                        <label for="admin-table-status" class="visually-hidden">Filter status stok</label>
+                        <select id="admin-table-status" class="form-select form-select-sm">
+                            <option value="">Semua Status</option>
+                            <option value="ready">Ready Stock</option>
+                            <option value="sold">Sold Out</option>
+                            <option value="nophoto">Belum Ada Foto</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-sm align-middle">
+                    <table class="table table-sm align-middle mb-0">
                         <thead>
                             <tr>
                                 <th>Produk</th>
                                 <th>Kategori</th>
-                                <th>Varian</th>
+                                <th>Varian &amp; Harga</th>
                                 <th class="text-end">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="admin-product-tbody">
                             @foreach ($catalog['products'] as $p)
                                 @php
                                     $vLines = implode("\n", array_map(fn($v) => "{$v['label']} | {$v['promo_price']} | {$v['original_price']}", $p['variants']));
                                     $sLines = implode("\n", $p['specs']);
-                                    $imgList = implode('; ', $p['images'] ?? [$p['image']]);
+                                    $pImages = array_values(array_filter($p['images'] ?? [$p['image'] ?? '']));
+                                    $imgList = implode('; ', $pImages);
+                                    $thumbUrl = $pImages[0] ?? '';
+                                    $hasPhoto = count($pImages) > 0;
+                                    $minPrice = collect($p['variants'])->min('promo_price') ?? 0;
+                                    $isSold = !empty($p['is_sold_out']);
                                 @endphp
-                                <tr>
+                                <tr class="admin-product-row"
+                                    data-category="{{ $p['category'] }}"
+                                    data-status="{{ $isSold ? 'sold' : 'ready' }}"
+                                    data-has-photo="{{ $hasPhoto ? '1' : '0' }}"
+                                    data-search="{{ strtolower($p['name'] . ' ' . $p['brand'] . ' ' . $p['id'] . ' ' . $p['category']) }}">
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="fw-semibold">{{ $p['name'] }}</div>
-                                            @if (!empty($p['is_sold_out']))
-                                                <span class="badge bg-danger rounded-0">SOLD OUT</span>
+                                            @if ($thumbUrl)
+                                                <img src="{{ $thumbUrl }}" alt="{{ $p['name'] }}" width="44" height="44" loading="lazy" style="width:44px;height:44px;object-fit:cover;flex-shrink:0;" class="border border-2 border-dark bg-light">
+                                            @else
+                                                <div style="width:44px;height:44px;flex-shrink:0;background:#F3ECE1;font-size:9px;line-height:1.1;" class="border border-2 border-dark d-flex align-items-center justify-content-center text-center fw-bold font-monospace text-secondary">
+                                                    NO<br>FOTO
+                                                </div>
                                             @endif
+                                            <div>
+                                                <div class="d-flex flex-wrap align-items-center gap-1">
+                                                    <span class="fw-semibold">{{ $p['name'] }}</span>
+                                                    @if ($isSold)
+                                                        <span class="badge bg-danger rounded-0">SOLD OUT</span>
+                                                    @endif
+                                                    @if (!$hasPhoto)
+                                                        <span class="badge text-dark border border-dark rounded-0" style="background:#FDE047;">BELUM ADA FOTO</span>
+                                                    @endif
+                                                </div>
+                                                <small class="text-secondary">{{ $p['brand'] }} • <code>{{ $p['id'] }}</code> ({{ count($pImages) }} foto)</small>
+                                            </div>
                                         </div>
-                                        <small class="text-secondary">{{ $p['brand'] }} • <code>{{ $p['id'] }}</code> ({{ count($p['images'] ?? [$p['image']]) }} foto)</small>
                                     </td>
                                     <td><span class="badge text-bg-light border border-dark rounded-0">{{ $p['category'] }}</span></td>
-                                    <td><small>{{ count($p['variants']) }} varian</small></td>
+                                    <td>
+                                        <div class="small fw-semibold">Mulai Rp {{ number_format($minPrice, 0, ',', '.') }}</div>
+                                        <small class="text-secondary">{{ count($p['variants']) }} varian</small>
+                                    </td>
                                     <td class="text-end">
-                                        <div class="d-inline-flex gap-1">
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-1">
                                             <button type="button" class="btn btn-warning btn-sm story-btn"
                                                     data-id="{{ $p['id'] }}"
                                                     data-name="{{ $p['name'] }}"
@@ -394,14 +530,14 @@
                                                     data-image="{{ $imgList }}"
                                                     data-specs="{{ $sLines }}"
                                                     data-variants="{{ $vLines }}"
-                                                    data-sold-out="{{ !empty($p['is_sold_out']) ? '1' : '0' }}"
+                                                    data-sold-out="{{ $isSold ? '1' : '0' }}"
                                                     title="Generate Card Promosi Story (9:16)">
                                                 Story
                                             </button>
                                             <form method="POST" action="/admin/products/{{ $p['id'] }}/toggle-sold" class="m-0 d-inline">
                                                 @csrf
-                                                <button type="submit" class="btn btn-sm {{ !empty($p['is_sold_out']) ? 'btn-success' : 'btn-dark' }}" title="{{ !empty($p['is_sold_out']) ? 'Tandai Ready Stock' : 'Tandai Sold Out' }}">
-                                                    {{ !empty($p['is_sold_out']) ? 'Set Ready' : 'Sold Out' }}
+                                                <button type="submit" class="btn btn-sm {{ $isSold ? 'btn-success' : 'btn-dark' }}" title="{{ $isSold ? 'Tandai Ready Stock' : 'Tandai Sold Out' }}">
+                                                    {{ $isSold ? 'Set Ready' : 'Sold Out' }}
                                                 </button>
                                             </form>
                                             <button type="button" class="btn btn-primary btn-sm edit-btn"
@@ -413,10 +549,10 @@
                                                     data-image="{{ $imgList }}"
                                                     data-specs="{{ $sLines }}"
                                                     data-variants="{{ $vLines }}"
-                                                    data-sold-out="{{ !empty($p['is_sold_out']) ? '1' : '0' }}">
-                                                Edit
+                                                    data-sold-out="{{ $isSold ? '1' : '0' }}">
+                                                {{ $hasPhoto ? 'Edit' : 'Edit / +Foto' }}
                                             </button>
-                                            <form method="POST" action="/admin/products/{{ $p['id'] }}" onsubmit="return confirm('Hapus produk ini?')">
+                                            <form method="POST" action="/admin/products/{{ $p['id'] }}" class="m-0 d-inline" onsubmit="return confirm('Hapus produk ini?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
@@ -428,10 +564,15 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div id="admin-table-empty" class="text-center py-4 px-3 border border-2 border-dark mt-2 {{ count($catalog['products']) > 0 ? 'd-none' : '' }}" style="background-color: #F3ECE1;">
+                    <div class="fw-bold small text-uppercase font-headline mb-1">Tidak Ada Produk yang Cocok</div>
+                    <p class="small text-secondary mb-0">Coba ubah kata kunci pencarian atau pilih filter kategori/status lain.</p>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 
 <!-- Modal Story Card Generator (9:16) -->
 <div class="modal fade" id="storyModal" tabindex="-1" aria-labelledby="storyModalLabel" aria-hidden="true" role="dialog">
@@ -521,6 +662,37 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
+document.getElementById('btn-download-xlsx')?.addEventListener('click', () => {
+    const rows = [
+        ['name', 'brand', 'category', 'badge', 'specs_text', 'variants_text'],
+        [
+            'Acer Aspire 5 Slim 14"',
+            'Acer',
+            'Laptop',
+            'Promo Kuliah',
+            'Layar 14" IPS FHD; Garansi Resmi 2 Tahun; Windows 11 Original',
+            'Core i3 / 8GB / 512GB SSD | 5799000 | 6399000; Core i5 / 16GB / 512GB SSD | 7699000 | 8299000',
+        ],
+        [
+            'Canon PIXMA G2020 Ink Tank',
+            'Canon',
+            'Printer',
+            'Siap Cetak',
+            'Print Scan Copy; Tinta Botol Hemat; Garansi Resmi',
+            'Paket Standar + Tinta Original | 2150000 | 2450000',
+        ],
+    ];
+    if (window.XLSX) {
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 16 }, { wch: 48 }, { wch: 62 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Template Produk');
+        XLSX.writeFile(wb, 'template-produk-java-computer.xlsx');
+    } else {
+        window.location.href = '/admin/products/template';
+    }
+});
+
 document.getElementById('bulk-file')?.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     const payload = document.getElementById('csv-payload');
@@ -621,13 +793,131 @@ photoInput?.addEventListener('change', async (e) => {
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.textContent = 'Simpan Produk';
+            saveBtn.textContent = document.getElementById('f-original-id')?.value ? 'Perbarui Produk' : 'Simpan Produk';
         }
     }
 });
 
+// Toggle Lihat / Tutup Password
+document.querySelectorAll('.pw-toggle-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.textContent = isHidden ? 'Tutup' : 'Lihat';
+        btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+    });
+});
+
+// Buka tab secara otomatis jika ada input invalid di tab tersembunyi
+document.querySelectorAll('#settings-form input, #settings-form textarea').forEach((field) => {
+    field.addEventListener('invalid', () => {
+        const pane = field.closest('.tab-pane');
+        if (pane && !pane.classList.contains('active')) {
+            const tabBtn = document.querySelector(`[data-bs-target="#${pane.id}"]`);
+            if (tabBtn && window.bootstrap) {
+                bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+            }
+        }
+    });
+});
+
+// Auto-Slug Produk & Manajemen Mode Edit / Tambah Baru
+const fOriginalId = document.getElementById('f-original-id');
+const fId = document.getElementById('f-id');
+const fName = document.getElementById('f-name');
+const fCategory = document.getElementById('f-category');
+const editModeBanner = document.getElementById('edit-mode-banner');
+const editModeProductName = document.getElementById('edit-mode-product-name');
+const productFormModeBadge = document.getElementById('product-form-mode-badge');
+const photoPreview = document.getElementById('photo-preview');
+let isSlugManuallyEdited = false;
+
+function toSlug(str) {
+    return String(str || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 80);
+}
+
+function updateAutoSlug() {
+    if (fOriginalId?.value || isSlugManuallyEdited) return;
+    const catPrefix = toSlug(fCategory?.value || '');
+    const nameSlug = toSlug(fName?.value || '');
+    if (!nameSlug) {
+        fId.value = '';
+        return;
+    }
+    fId.value = nameSlug.startsWith(catPrefix) ? nameSlug : toSlug(`${catPrefix}-${nameSlug}`);
+}
+
+fName?.addEventListener('input', updateAutoSlug);
+fCategory?.addEventListener('change', updateAutoSlug);
+fId?.addEventListener('input', () => {
+    isSlugManuallyEdited = fId.value.trim() !== '';
+    fId.value = toSlug(fId.value);
+});
+
+function renderExistingPhotoThumbnails(rawImageStr) {
+    if (!photoPreview) return;
+    photoPreview.innerHTML = '';
+    const urls = String(rawImageStr || '').split(';').map(s => s.trim()).filter(Boolean);
+    if (!urls.length) {
+        photoPreview.innerHTML = '<span class="badge text-dark border border-dark rounded-0 py-1 px-2" style="background:#FDE047;">Produk ini belum memiliki foto. Silakan pilih file foto di atas lalu klik Perbarui Produk.</span>';
+        return;
+    }
+    urls.forEach((url, idx) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'border border-dark p-1 bg-white text-center';
+        wrap.style.width = '70px';
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `Foto ${idx + 1}`;
+        img.style.cssText = 'width:60px;height:60px;object-fit:cover;display:block;margin:0 auto;';
+
+        const cap = document.createElement('div');
+        cap.className = 'font-monospace text-[10px] text-secondary mt-1';
+        cap.textContent = `Foto #${idx + 1}`;
+
+        wrap.appendChild(img);
+        wrap.appendChild(cap);
+        photoPreview.appendChild(wrap);
+    });
+}
+
+function resetProductForm() {
+    const form = document.getElementById('product-form');
+    form?.reset();
+    if (fOriginalId) fOriginalId.value = '';
+    if (fId) fId.value = '';
+    if (fName) fName.value = '';
+    document.getElementById('f-brand').value = '';
+    document.getElementById('f-badge').value = '';
+    document.getElementById('f-image').value = '';
+    document.getElementById('f-specs').value = '';
+    document.getElementById('f-variants').value = '';
+    document.getElementById('f-sold-out').checked = false;
+    isSlugManuallyEdited = false;
+    if (photoPreview) photoPreview.innerHTML = '';
+    editModeBanner?.classList.add('d-none');
+    if (productFormModeBadge) {
+        productFormModeBadge.textContent = 'MODE TAMBAH BARU';
+        productFormModeBadge.style.background = '#F3ECE1';
+    }
+    if (saveBtn) {
+        saveBtn.textContent = 'Simpan Produk';
+    }
+}
+
+document.getElementById('btn-reset-product')?.addEventListener('click', resetProductForm);
+document.getElementById('btn-cancel-edit')?.addEventListener('click', resetProductForm);
+
 document.querySelectorAll('.edit-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
+        isSlugManuallyEdited = true;
         document.getElementById('f-original-id').value = btn.dataset.id;
         document.getElementById('f-id').value = btn.dataset.id;
         document.getElementById('f-name').value = btn.dataset.name;
@@ -638,9 +928,56 @@ document.querySelectorAll('.edit-btn').forEach((btn) => {
         document.getElementById('f-specs').value = btn.dataset.specs;
         document.getElementById('f-variants').value = btn.dataset.variants;
         document.getElementById('f-sold-out').checked = btn.dataset.soldOut === '1';
+
+        if (editModeProductName) editModeProductName.textContent = `${btn.dataset.name} (${btn.dataset.id})`;
+        editModeBanner?.classList.remove('d-none');
+        if (productFormModeBadge) {
+            productFormModeBadge.textContent = 'MODE EDIT PRODUK';
+            productFormModeBadge.style.background = '#E5AC67';
+        }
+        if (saveBtn) {
+            saveBtn.textContent = 'Perbarui Produk';
+        }
+        renderExistingPhotoThumbnails(btn.dataset.image);
         document.getElementById('product-form').scrollIntoView({ behavior: 'smooth' });
     });
 });
+
+// Pencarian & Filter Instan Tabel Produk Admin
+const adminTableSearch = document.getElementById('admin-table-search');
+const adminTableCat = document.getElementById('admin-table-cat');
+const adminTableStatus = document.getElementById('admin-table-status');
+const adminProductRows = document.querySelectorAll('.admin-product-row');
+const adminTableEmpty = document.getElementById('admin-table-empty');
+const adminProductCount = document.getElementById('admin-product-count');
+
+function filterAdminProductTable() {
+    const q = (adminTableSearch?.value || '').toLowerCase().trim();
+    const cat = adminTableCat?.value || '';
+    const status = adminTableStatus?.value || '';
+    let visible = 0;
+
+    adminProductRows.forEach((row) => {
+        const matchQ = !q || (row.dataset.search || '').includes(q);
+        const matchCat = !cat || row.dataset.category === cat;
+        const matchStatus = !status
+            || (status === 'nophoto' ? row.dataset.hasPhoto === '0' : row.dataset.status === status);
+        const show = matchQ && matchCat && matchStatus;
+        row.classList.toggle('d-none', !show);
+        if (show) visible++;
+    });
+
+    if (adminTableEmpty) {
+        adminTableEmpty.classList.toggle('d-none', visible > 0);
+    }
+    if (adminProductCount) {
+        adminProductCount.textContent = `${visible} / ${adminProductRows.length}`;
+    }
+}
+
+adminTableSearch?.addEventListener('input', filterAdminProductTable);
+adminTableCat?.addEventListener('change', filterAdminProductTable);
+adminTableStatus?.addEventListener('change', filterAdminProductTable);
 
 // Story Card Generator (9:16)
 const STORE_NAME = @json($catalog['store_name'] ?? 'Java Computer Seller');

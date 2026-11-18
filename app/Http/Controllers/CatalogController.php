@@ -356,21 +356,35 @@ class CatalogController extends Controller
         return array_values(array_unique($images));
     }
 
-    private function buildProduct(array $data, array $uploadedFiles = []): ?array
+    private function buildProduct(array $data, array $uploadedFiles = [], bool $allowEmptyPhoto = false, array $fallbackImages = []): ?array
     {
         $images = $this->extractImages($data, $uploadedFiles);
-        if (empty($images)) {
+        if (empty($images) && !empty($fallbackImages)) {
+            $images = $fallbackImages;
+        }
+        if (empty($images) && !$allowEmptyPhoto) {
             return null;
         }
 
-        $specs = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n|;/', $data['specs_text']))));
+        $specs = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n|;/', (string) ($data['specs_text'] ?? '')))));
         $variants = [];
-        foreach (preg_split('/\r\n|\r|\n|;/', $data['variants_text']) as $line) {
+        foreach (preg_split('/\r\n|\r|\n|;/', (string) ($data['variants_text'] ?? '')) as $line) {
             $line = trim($line);
             if ($line === '') {
                 continue;
             }
             $parts = array_map('trim', explode('|', $line));
+            if (count($parts) === 2 && $parts[0] !== '') {
+                $promo = (int) preg_replace('/[^0-9]/', '', $parts[1]);
+                if ($promo > 0) {
+                    $variants[] = [
+                        'label' => $parts[0],
+                        'promo_price' => $promo,
+                        'original_price' => $promo,
+                    ];
+                }
+                continue;
+            }
             if (count($parts) < 3 || $parts[0] === '') {
                 continue;
             }
@@ -392,8 +406,8 @@ class CatalogController extends Controller
             'name' => $data['name'],
             'brand' => $data['brand'],
             'category' => $data['category'],
-            'badge' => $data['badge'],
-            'image' => $images[0],
+            'badge' => !empty($data['badge']) ? $data['badge'] : 'Ready Stock',
+            'image' => $images[0] ?? '',
             'images' => $images,
             'specs' => $specs ?: ['Garansi Resmi'],
             'variants' => $variants,
@@ -405,6 +419,10 @@ class CatalogController extends Controller
     {
         foreach ($catalog['products'] as $idx => $existing) {
             if ($existing['id'] === $product['id']) {
+                if (empty($product['images']) && !empty($existing['images'])) {
+                    $product['images'] = $existing['images'];
+                    $product['image'] = $existing['image'] ?? ($existing['images'][0] ?? '');
+                }
                 $catalog['products'][$idx] = $product;
                 return;
             }
@@ -418,14 +436,24 @@ class CatalogController extends Controller
         $rules['original_id'] = 'nullable|string|max:80';
         $data = $request->validate($rules);
         $files = $request->file('photos', []);
-        $product = $this->buildProduct($data, is_array($files) ? $files : [$files]);
-
-        if (!$product) {
-            return redirect('/admin')->withErrors(['product' => 'Pastikan minimal 1 foto (upload/URL) dan format varian (Label | Harga Promo | Harga Coret) valid.']);
-        }
 
         $catalog = $this->loadCatalog();
         $originalId = $data['original_id'] ?? null;
+        $lookupId = !empty($originalId) ? $originalId : $data['id'];
+        $existingProduct = collect($catalog['products'])->firstWhere('id', $lookupId);
+        $fallbackImages = $existingProduct ? array_values(array_filter($existingProduct['images'] ?? [$existingProduct['image'] ?? ''])) : [];
+
+        $product = $this->buildProduct(
+            $data,
+            is_array($files) ? $files : [$files],
+            $existingProduct !== null,
+            $fallbackImages
+        );
+
+        if (!$product) {
+            return redirect('/admin')->withErrors(['product' => 'Pastikan minimal 1 foto diupload dan format varian (Label | Harga Promo | Harga Coret) valid.']);
+        }
+
         if (!empty($originalId) && $originalId !== $product['id']) {
             $catalog['products'] = array_values(array_filter(
                 $catalog['products'],
@@ -441,25 +469,21 @@ class CatalogController extends Controller
     public function downloadTemplate()
     {
         $rows = [
-            ['id', 'name', 'brand', 'category', 'badge', 'image', 'specs_text', 'variants_text'],
+            ['name', 'brand', 'category', 'badge', 'specs_text', 'variants_text'],
             [
-                'laptop-acer-aspire-5',
                 'Acer Aspire 5 Slim 14"',
                 'Acer',
                 'Laptop',
                 'Promo Kuliah',
-                'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80',
-                'Layar 14" IPS FHD;Garansi Resmi 2 Tahun;Windows 11 Original',
-                'Core i3 / 8GB / 512GB SSD | 5799000 | 6399000;Core i5 / 16GB / 512GB SSD | 7699000 | 8299000',
+                'Layar 14" IPS FHD; Garansi Resmi 2 Tahun; Windows 11 Original',
+                'Core i3 / 8GB / 512GB SSD | 5799000 | 6399000; Core i5 / 16GB / 512GB SSD | 7699000 | 8299000',
             ],
             [
-                'printer-canon-g2020',
                 'Canon PIXMA G2020 Ink Tank',
                 'Canon',
                 'Printer',
                 'Siap Cetak',
-                'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80',
-                'Print Scan Copy;Tinta Botol Hemat;Garansi Resmi',
+                'Print Scan Copy; Tinta Botol Hemat; Garansi Resmi',
                 'Paket Standar + Tinta Original | 2150000 | 2450000',
             ],
         ];
@@ -504,12 +528,49 @@ class CatalogController extends Controller
         fwrite($fh, $raw);
         rewind($fh);
 
-        $headers = array_map(fn ($h) => strtolower(trim((string) $h)), fgetcsv($fh, 0, $delimiter) ?: []);
-        $expected = ['id', 'name', 'brand', 'category', 'badge', 'image', 'specs_text', 'variants_text'];
-        if ($headers !== $expected) {
+        $rawHeaders = array_map(fn ($h) => strtolower(trim((string) $h)), fgetcsv($fh, 0, $delimiter) ?: []);
+        $headerAliasMap = [
+            'id' => 'id',
+            'slug' => 'id',
+            'name' => 'name',
+            'nama' => 'name',
+            'nama_produk' => 'name',
+            'nama produk' => 'name',
+            'brand' => 'brand',
+            'merek' => 'brand',
+            'merk' => 'brand',
+            'category' => 'category',
+            'kategori' => 'category',
+            'badge' => 'badge',
+            'label' => 'badge',
+            'label_promo' => 'badge',
+            'image' => 'image',
+            'foto' => 'image',
+            'specs_text' => 'specs_text',
+            'spesifikasi' => 'specs_text',
+            'specs' => 'specs_text',
+            'variants_text' => 'variants_text',
+            'varian' => 'variants_text',
+            'varian_harga' => 'variants_text',
+            'variants' => 'variants_text',
+        ];
+        $headers = array_map(fn ($h) => $headerAliasMap[$h] ?? $h, $rawHeaders);
+        $requiredCols = ['name', 'brand', 'category', 'variants_text'];
+
+        if (!empty(array_diff($requiredCols, $headers))) {
             fclose($fh);
-            return redirect('/admin')->withErrors(['import' => 'Header kolom tidak sesuai template. Gunakan kolom: ' . implode(', ', $expected)]);
+            return redirect('/admin')->withErrors([
+                'import' => 'Header kolom tidak sesuai template. Minimal wajib ada kolom: name, brand, category, badge, specs_text, variants_text',
+            ]);
         }
+
+        $categoryLookup = [
+            'laptop' => 'Laptop',
+            'pc' => 'PC',
+            'printer' => 'Printer',
+            'monitor' => 'Monitor',
+            'aksesoris' => 'Aksesoris',
+        ];
 
         $parsedProducts = [];
         $lineNum = 1;
@@ -518,16 +579,36 @@ class CatalogController extends Controller
             if ($row === [null] || empty(array_filter($row, fn ($v) => trim((string) $v) !== ''))) {
                 continue;
             }
-            $assoc = array_combine($expected, array_pad(array_slice(array_map('trim', $row), 0, 8), 8, ''));
+            $padded = array_pad(array_slice(array_map('trim', $row), 0, count($headers)), count($headers), '');
+            $assoc = array_combine($headers, $padded);
+
+            $rawCat = strtolower($assoc['category'] ?? '');
+            if (isset($categoryLookup[$rawCat])) {
+                $assoc['category'] = $categoryLookup[$rawCat];
+            }
+
+            if (empty($assoc['id'])) {
+                $slugSource = ($assoc['category'] ?? '') . '-' . ($assoc['name'] ?? '');
+                $assoc['id'] = substr(trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower($slugSource)), '-'), 0, 80);
+            }
+
+            if (empty($assoc['badge'])) {
+                $assoc['badge'] = 'Ready Stock';
+            }
+            if (empty($assoc['specs_text'])) {
+                $assoc['specs_text'] = 'Garansi Resmi';
+            }
+            $assoc['image'] = $assoc['image'] ?? '';
+
             $validator = Validator::make($assoc, $this->productRules());
             if ($validator->fails()) {
                 fclose($fh);
                 return redirect('/admin')->withErrors(['import' => "Baris {$lineNum}: " . $validator->errors()->first()]);
             }
-            $product = $this->buildProduct($assoc);
+            $product = $this->buildProduct($assoc, [], true);
             if (!$product) {
                 fclose($fh);
-                return redirect('/admin')->withErrors(['import' => "Baris {$lineNum}: Format varian tidak valid."]);
+                return redirect('/admin')->withErrors(['import' => "Baris {$lineNum}: Format varian tidak valid. Gunakan format: Nama Varian | Harga Promo | Harga Normal"]);
             }
             $parsedProducts[] = $product;
         }
