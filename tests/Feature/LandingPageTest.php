@@ -531,9 +531,17 @@ class LandingPageTest extends TestCase
         $admin->assertSee('STORY_THEMES', false);
         $admin->assertSee('Generator Story Card Produk');
 
-        foreach (['ramadhan', 'idul_fitri', 'tahun_baru', 'kemerdekaan', 'back_to_school', 'pemilu'] as $themeKey) {
+        foreach (['default', 'ramadhan', 'idul_fitri', 'tahun_baru', 'kemerdekaan', 'back_to_school', 'pemilu'] as $themeKey) {
             $admin->assertSee('value="' . $themeKey . '"', false);
+            $admin->assertSee('/images/story-themes/' . $themeKey . '/bg.png', false);
+            $admin->assertSee('/images/story-themes/' . $themeKey . '/overlay.png', false);
+            $this->assertFileExists(public_path('images/story-themes/' . $themeKey . '/bg.png'));
+            $this->assertFileExists(public_path('images/story-themes/' . $themeKey . '/overlay.png'));
         }
+        $admin->assertSee('bgAsset', false);
+        $admin->assertSee('overlayAsset', false);
+        $admin->assertSee('STORY_DEFAULT_LAYOUT', false);
+        $admin->assertSee('document.fonts.ready', false);
         $admin->assertSee('Chat & Order WhatsApp: ${STORE_WA}', false);
         $admin->assertSee('captionHook', false);
         $admin->assertSee('id="settingsTabs"', false);

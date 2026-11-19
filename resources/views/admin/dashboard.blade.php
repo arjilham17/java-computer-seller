@@ -986,15 +986,67 @@ const STORE_WA = @json($catalog['whatsapp_number'] ?? '6281234567890');
 const STORE_ADDRESS = @json($catalog['address'] ?? 'Jl. Raya Utama, Indonesia');
 const BASE_ORIGIN = window.location.origin;
 
-let storeLogoImg = null;
-if (STORE_LOGO) {
-    storeLogoImg = new Image();
-    storeLogoImg.onload = () => {
-        if (currentStoryProduct) {
-            renderStoryCanvas();
+const STORY_DEFAULT_LAYOUT = {
+    logo: { x: 80, y: 157, w: 96, h: 96 },
+    headerTitle: { x: 196, y: 198, maxW: 684 },
+    headerSub: { x: 196, y: 236, maxW: 684 },
+    stripLeft: { x: 84, y: 321, maxW: 540 },
+    stripRight: { x: 996, y: 321, maxW: 350 },
+    photo: { x: 68, y: 378, w: 944, h: 584 },
+    soldOut: { x: 60, y: 382, w: 330, h: 58 },
+    brandY: 1022,
+    nameY: 1080,
+    priceBox: { x: 60, y: 1235, w: 960, h: 300, variantH: 56 },
+    footer: { x: 60, y: 1560, w: 960, h: 200 },
+};
+
+const storyImageCache = new Map();
+
+function isCrossOriginUrl(url) {
+    if (!url || url.startsWith('/') || url.startsWith('data:')) return false;
+    try {
+        return new URL(url, window.location.href).origin !== window.location.origin;
+    } catch (e) {
+        return false;
+    }
+}
+
+function loadCanvasImage(url) {
+    if (!url) return Promise.resolve(null);
+    const crossOrigin = isCrossOriginUrl(url);
+    const cached = storyImageCache.get(url);
+    if (cached && cached.complete && cached.naturalWidth > 0) {
+        return Promise.resolve(cached);
+    }
+    return new Promise((resolve) => {
+        const img = new Image();
+        if (crossOrigin) {
+            img.crossOrigin = 'anonymous';
         }
-    };
-    storeLogoImg.src = STORE_LOGO;
+        img.onload = () => {
+            if (!crossOrigin) {
+                storyImageCache.set(url, img);
+            }
+            resolve(img);
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+
+function fitFontSize(ctx, text, weightFamily, maxWidth, startPx, minPx) {
+    let size = startPx;
+    while (size > minPx) {
+        ctx.font = `${weightFamily}`.replace('{size}', String(size));
+        if (ctx.measureText(text).width <= maxWidth) break;
+        size -= 2;
+    }
+    ctx.font = `${weightFamily}`.replace('{size}', String(size));
+    return size;
+}
+
+if (STORE_LOGO) {
+    loadCanvasImage(STORE_LOGO);
 }
 
 function formatRupiahStory(num) {
@@ -1020,8 +1072,11 @@ const storyCopyFeedback = document.getElementById('story-copy-feedback');
 
 const STORY_THEMES = {
     default: {
+        bgAsset: '/images/story-themes/default/bg.png',
+        overlayAsset: '/images/story-themes/default/overlay.png',
         canvasBg: '#FCF9F3',
         frameBorder: '#111111',
+        shadowHex: '#111111',
         headerBg: '#F3ECE1',
         headerText: '#1A1A1A',
         headerSubText: '#57534E',
@@ -1043,26 +1098,13 @@ const STORY_THEMES = {
         footerNote: 'Pesan cepat tanpa ribet via link di bio / status WhatsApp!',
         captionHook: 'Spill setup wajib buat nugas, kerja, atau mabar tanpa drama ngelag!',
         captionClosing: 'Unit 100% ori, bergaransi resmi toko, tinggal gas pake. Stok promo terbatas, jangan sampe kehabisan!',
-        drawOrnament(ctx) {
-            ctx.fillStyle = '#E5AC67';
-            ctx.fillRect(888, 80, 100, 100);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(888, 80, 100, 100);
-            ctx.fillStyle = '#1A1A1A';
-            ctx.fillRect(913, 105, 50, 50);
-            for (let i = 0; i < 3; i++) {
-                const offset = 112 + i * 16;
-                ctx.fillRect(900, offset, 10, 5);
-                ctx.fillRect(966, offset, 10, 5);
-                ctx.fillRect(808 + offset, 92, 5, 10);
-                ctx.fillRect(808 + offset, 158, 5, 10);
-            }
-        }
     },
     ramadhan: {
+        bgAsset: '/images/story-themes/ramadhan/bg.png',
+        overlayAsset: '/images/story-themes/ramadhan/overlay.png',
         canvasBg: '#FAF6EC',
         frameBorder: '#111111',
+        shadowHex: '#111111',
         headerBg: '#F3ECE1',
         headerText: '#1A1A1A',
         headerSubText: '#065F46',
@@ -1084,31 +1126,13 @@ const STORY_THEMES = {
         footerNote: 'Promo berkah Ramadhan: gratis instalasi & siap pakai untuk ibadah/kerja!',
         captionHook: 'Edisi Berkah Ramadhan! Ngabuburit makin produktif bareng gear baru yang sat-set:',
         captionClosing: 'Udah free instalasi & garansi resmi toko. Stok Ramadhan terbatas, amankan unitmu sebelum sold out!',
-        drawOrnament(ctx) {
-            ctx.fillStyle = '#065F46';
-            ctx.fillRect(888, 80, 100, 100);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(888, 80, 100, 100);
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(936, 130, 30, 0, Math.PI * 2);
-            ctx.fillStyle = '#FCD34D';
-            ctx.fill();
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(948, 122, 24, 0, Math.PI * 2);
-            ctx.fillStyle = '#065F46';
-            ctx.fill();
-            ctx.fillStyle = '#FCD34D';
-            ctx.fillRect(954, 104, 10, 10);
-            ctx.restore();
-        }
     },
     idul_fitri: {
+        bgAsset: '/images/story-themes/idul_fitri/bg.png',
+        overlayAsset: '/images/story-themes/idul_fitri/overlay.png',
         canvasBg: '#F7FAF5',
         frameBorder: '#111111',
+        shadowHex: '#111111',
         headerBg: '#ECFDF5',
         headerText: '#1A1A1A',
         headerSubText: '#166534',
@@ -1130,37 +1154,13 @@ const STORY_THEMES = {
         footerNote: 'Spesial Hari Raya Idul Fitri: tukar THR dengan perangkat bergaransi resmi!',
         captionHook: 'THR cair saatnya self-reward! Upgrade laptop atau PC impian di Promo Spesial Lebaran:',
         captionClosing: 'Biar THR nggak numpang lewat doang, mending jadiin gear awet bergaransi resmi toko!',
-        drawOrnament(ctx) {
-            ctx.fillStyle = '#FDE047';
-            ctx.fillRect(888, 80, 100, 100);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(888, 80, 100, 100);
-            ctx.save();
-            ctx.translate(938, 124);
-            ctx.rotate(Math.PI / 4);
-            ctx.fillStyle = '#15803D';
-            ctx.fillRect(-22, -22, 44, 44);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(-22, -22, 44, 44);
-            ctx.strokeStyle = '#FDE047';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(-22, -7); ctx.lineTo(22, -7);
-            ctx.moveTo(-22, 7); ctx.lineTo(22, 7);
-            ctx.moveTo(-7, -22); ctx.lineTo(-7, 22);
-            ctx.moveTo(7, -22); ctx.lineTo(7, 22);
-            ctx.stroke();
-            ctx.restore();
-            ctx.fillStyle = '#15803D';
-            ctx.fillRect(931, 156, 6, 16);
-            ctx.fillRect(940, 156, 6, 16);
-        }
     },
     tahun_baru: {
+        bgAsset: '/images/story-themes/tahun_baru/bg.png',
+        overlayAsset: '/images/story-themes/tahun_baru/overlay.png',
         canvasBg: '#0F172A',
         frameBorder: '#38BDF8',
+        shadowHex: '#38BDF8',
         headerBg: '#F8FAFC',
         headerText: '#0F172A',
         headerSubText: '#1E3A8A',
@@ -1182,33 +1182,13 @@ const STORY_THEMES = {
         footerNote: 'Sambut tahun baru dengan laptop & PC rakitan baru siap kerja cepat!',
         captionHook: 'Tahun baru, setup baru! Bye-bye device lemot, saatnya pindah ke yang ngebut:',
         captionClosing: 'Awali tahun baru dengan performa maksimal, 100% ori & langsung siap tempur!',
-        drawOrnament(ctx) {
-            ctx.fillStyle = '#0F172A';
-            ctx.fillRect(888, 80, 100, 100);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(888, 80, 100, 100);
-            ctx.save();
-            ctx.translate(938, 130);
-            ctx.strokeStyle = '#FACC15';
-            ctx.lineWidth = 4;
-            for (let i = 0; i < 8; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, -10);
-                ctx.lineTo(0, -32);
-                ctx.stroke();
-                ctx.rotate(Math.PI / 4);
-            }
-            ctx.fillStyle = '#38BDF8';
-            ctx.beginPath();
-            ctx.arc(0, 0, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
     },
     kemerdekaan: {
+        bgAsset: '/images/story-themes/kemerdekaan/bg.png',
+        overlayAsset: '/images/story-themes/kemerdekaan/overlay.png',
         canvasBg: '#FFF8F6',
         frameBorder: '#111111',
+        shadowHex: '#111111',
         headerBg: '#FFFFFF',
         headerText: '#1A1A1A',
         headerSubText: '#B91C1C',
@@ -1230,31 +1210,13 @@ const STORY_THEMES = {
         footerNote: 'Promo Semarak Kemerdekaan RI: diskon merdeka untuk semua produk pilihan!',
         captionHook: 'Promo Merdeka 17-an! Saatnya merdeka dari laptop kentang & PC lemot:',
         captionClosing: 'Harga merdeka paling worth it minggu ini, jaminan ori & garansi resmi toko!',
-        drawOrnament(ctx) {
-            ctx.fillStyle = '#DC2626';
-            ctx.fillRect(888, 80, 100, 50);
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(888, 130, 100, 50);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(888, 80, 100, 100);
-            ctx.beginPath();
-            ctx.moveTo(888, 130);
-            ctx.lineTo(988, 130);
-            ctx.stroke();
-            ctx.fillStyle = '#FDE047';
-            ctx.fillRect(904, 114, 68, 32);
-            ctx.strokeRect(904, 114, 68, 32);
-            ctx.fillStyle = '#111111';
-            ctx.font = "bold 18px 'JetBrains Mono', monospace";
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('17-08', 938, 131);
-        }
     },
     back_to_school: {
+        bgAsset: '/images/story-themes/back_to_school/bg.png',
+        overlayAsset: '/images/story-themes/back_to_school/overlay.png',
         canvasBg: '#F1F5F9',
         frameBorder: '#111111',
+        shadowHex: '#111111',
         headerBg: '#FFFFFF',
         headerText: '#0F172A',
         headerSubText: '#1D4ED8',
@@ -1276,34 +1238,13 @@ const STORY_THEMES = {
         footerNote: 'Gratis instalasi Windows, Office & aplikasi kuliah/sekolah siap pakai!',
         captionHook: 'Back to School & Campus! Senjata wajib buat pejuang tugas, coding, sampe skripsian:',
         captionClosing: 'Udah free instalasi Windows, Office & aplikasi kuliah. Tinggal buka, langsung siap nugas!',
-        drawOrnament(ctx) {
-            ctx.fillStyle = '#FDE047';
-            ctx.fillRect(888, 80, 100, 100);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(888, 80, 100, 100);
-            ctx.fillStyle = '#1D4ED8';
-            ctx.beginPath();
-            ctx.moveTo(938, 98);
-            ctx.lineTo(976, 118);
-            ctx.lineTo(938, 138);
-            ctx.lineTo(900, 118);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            ctx.fillRect(916, 136, 44, 18);
-            ctx.strokeRect(916, 136, 44, 18);
-            ctx.strokeStyle = '#111111';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(970, 120);
-            ctx.lineTo(970, 156);
-            ctx.stroke();
-        }
     },
     pemilu: {
+        bgAsset: '/images/story-themes/pemilu/bg.png',
+        overlayAsset: '/images/story-themes/pemilu/overlay.png',
         canvasBg: '#FAF7FC',
         frameBorder: '#111111',
+        shadowHex: '#111111',
         headerBg: '#F3E8FF',
         headerText: '#1A1A1A',
         headerSubText: '#5B21B6',
@@ -1325,23 +1266,6 @@ const STORY_THEMES = {
         footerNote: 'Semarak Pesta Demokrasi: tunjukkan jari tinta ungu & klaim harga promo ini!',
         captionHook: 'Spesial Pesta Demokrasi! Habis nyoblos jangan lupa klaim diskon jari tinta ungu:',
         captionClosing: 'Cukup tunjukin jari tinta ungu kamu buat dapetin harga spesial ini di toko atau via chat!',
-        drawOrnament(ctx) {
-            ctx.fillStyle = '#DDD6FE';
-            ctx.fillRect(888, 80, 100, 100);
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#111111';
-            ctx.strokeRect(888, 80, 100, 100);
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(906, 96, 64, 68);
-            ctx.strokeRect(906, 96, 64, 68);
-            ctx.strokeStyle = '#5B21B6';
-            ctx.lineWidth = 6;
-            ctx.beginPath();
-            ctx.moveTo(920, 130);
-            ctx.lineTo(934, 144);
-            ctx.lineTo(958, 114);
-            ctx.stroke();
-        }
     }
 };
 
@@ -1361,12 +1285,15 @@ function updateStoryCaption() {
     const v = currentStoryProduct.variants[vIdx] || currentStoryProduct.variants[0];
     const saveAmt = Math.max(0, v.original_price - v.promo_price);
     const productUrl = `${BASE_ORIGIN}/#produk-${currentStoryProduct.id}`;
+    const priceLine = saveAmt > 0
+        ? `Harga Promo: ${formatRupiahStory(v.promo_price)} (Harga normal ${formatRupiahStory(v.original_price)}, auto hemat ${formatRupiahStory(saveAmt)}!)`
+        : `Harga Spesial: ${formatRupiahStory(v.promo_price)}`;
 
     const lines = [
         theme.captionHook,
         `${currentStoryProduct.name} (${currentStoryProduct.brand}) - Varian ${v.label}`,
         ``,
-        `Harga Promo: ${formatRupiahStory(v.promo_price)} (Harga normal ${formatRupiahStory(v.original_price)}, auto hemat ${formatRupiahStory(saveAmt)}!)`,
+        priceLine,
         ``,
         `Spek andalan:`,
         ...currentStoryProduct.specs.slice(0, 4).map(s => `- ${s}`),
@@ -1380,338 +1307,353 @@ function updateStoryCaption() {
     storyCaptionText.value = lines.join('\n');
 }
 
-function renderStoryCanvas() {
+async function renderStoryCanvas() {
     if (!currentStoryProduct || !storyCanvas) return;
     const ctx = storyCanvas.getContext('2d');
     const renderId = ++currentStoryRenderId;
     const theme = getActiveStoryTheme();
+    const layout = theme.layout || STORY_DEFAULT_LAYOUT;
+    const boxShadow = theme.shadowHex || '#111111';
 
     const vIdx = parseInt(storyVariantSelect.value, 10) || 0;
     const variant = currentStoryProduct.variants[vIdx] || currentStoryProduct.variants[0];
-    const photoUrl = storyPhotoSelect.value || currentStoryProduct.images[0];
+    const photoUrl = storyPhotoSelect && storyPhotoSelect.options.length > 0
+        ? storyPhotoSelect.value
+        : (currentStoryProduct.images[0] || '');
     const showSpecs = storyIncludeSpecs.checked;
 
     storyLoading?.classList.remove('d-none');
     storyCorsNotice?.classList.add('d-none');
 
-    // 1. Base Background
-    ctx.fillStyle = theme.canvasBg;
-    ctx.fillRect(0, 0, 1080, 1920);
-
-    // 2. Outer Frame
-    ctx.lineWidth = 14;
-    ctx.strokeStyle = theme.frameBorder;
-    ctx.strokeRect(36, 36, 1008, 1848);
-
-    // 3. Top Header Bar
-    ctx.fillStyle = '#111111';
-    ctx.fillRect(66, 66, 948, 140);
-    ctx.fillStyle = theme.headerBg;
-    ctx.fillRect(60, 60, 948, 140);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#111111';
-    ctx.strokeRect(60, 60, 948, 140);
-
-    // Logo Toko (Foto Upload atau Fallback Badge JC)
-    if (STORE_LOGO && (!storeLogoImg || !storeLogoImg.complete)) {
-        if (!storeLogoImg) {
-            storeLogoImg = new Image();
-            storeLogoImg.onload = () => {
-                if (currentStoryProduct) renderStoryCanvas();
-            };
-            storeLogoImg.src = STORE_LOGO;
+    try {
+        if (document.fonts && document.fonts.ready) {
+            await Promise.race([
+                document.fonts.ready,
+                new Promise((resolve) => setTimeout(resolve, 1500)),
+            ]);
         }
-    }
-
-    if (storeLogoImg && storeLogoImg.complete && storeLogoImg.naturalWidth > 0) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(80, 80, 100, 100);
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#111111';
-        ctx.strokeRect(80, 80, 100, 100);
-
-        const maxLogoW = 90;
-        const maxLogoH = 90;
-        const lw = storeLogoImg.naturalWidth;
-        const lh = storeLogoImg.naturalHeight;
-        const lScale = Math.min(maxLogoW / lw, maxLogoH / lh);
-        const lDrawW = lw * lScale;
-        const lDrawH = lh * lScale;
-        const lDrawX = 80 + (100 - lDrawW) / 2;
-        const lDrawY = 80 + (100 - lDrawH) / 2;
-        ctx.drawImage(storeLogoImg, lDrawX, lDrawY, lDrawW, lDrawH);
-    } else {
-        ctx.fillStyle = '#B87834';
-        ctx.fillRect(80, 80, 100, 100);
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#111111';
-        ctx.strokeRect(80, 80, 100, 100);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = "bold 44px 'Space Grotesk', sans-serif";
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('JC', 130, 132);
-    }
-
-    // Store Name & Theme Subtitle
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = theme.headerText;
-    ctx.font = "bold 38px 'Space Grotesk', sans-serif";
-    ctx.fillText(STORE_NAME.toUpperCase(), 200, 122, 660);
-    ctx.fillStyle = theme.headerSubText;
-    ctx.font = "bold 20px 'JetBrains Mono', monospace";
-    ctx.fillText(theme.headerSub, 200, 158, 660);
-
-    // Draw Theme Vector Ornament in Header Right
-    if (typeof theme.drawOrnament === 'function') {
-        theme.drawOrnament(ctx);
-    }
-
-    // 4. Category & Badge Strip
-    ctx.fillStyle = '#111111';
-    ctx.fillRect(66, 226, 948, 64);
-    ctx.fillStyle = theme.stripBg;
-    ctx.fillRect(60, 220, 948, 64);
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#111111';
-    ctx.strokeRect(60, 220, 948, 64);
-
-    ctx.fillStyle = theme.stripText;
-    ctx.font = "bold 24px 'JetBrains Mono', monospace";
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(('● ' + currentStoryProduct.category.toUpperCase() + '  |  ' + currentStoryProduct.badge.toUpperCase()), 84, 260, 540);
-    ctx.textAlign = 'right';
-    ctx.fillText(theme.rightStripTag, 984, 260, 360);
-
-    function drawPhotoBox(imgObj) {
         if (renderId !== currentStoryRenderId) return;
 
-        // Shadow box
-        ctx.fillStyle = '#111111';
-        ctx.fillRect(68, 308, 948, 640);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(60, 300, 948, 640);
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#111111';
-        ctx.strokeRect(60, 300, 948, 640);
+        const [bgImg, overlayImg, logoImg, photoImg] = await Promise.all([
+            loadCanvasImage(theme.bgAsset),
+            loadCanvasImage(theme.overlayAsset),
+            STORE_LOGO ? loadCanvasImage(STORE_LOGO) : Promise.resolve(null),
+            photoUrl ? loadCanvasImage(photoUrl) : Promise.resolve(null),
+        ]);
+        if (renderId !== currentStoryRenderId) return;
 
-        if (imgObj) {
+        if (photoUrl && !photoImg) {
+            storyCorsNotice?.classList.remove('d-none');
+        }
+
+        function drawFallbackZones() {
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = theme.frameBorder;
+            ctx.strokeRect(24, 24, 1032, 1872);
+
+            const drawZoneBox = (x, y, w, h, fill, off) => {
+                ctx.fillStyle = boxShadow;
+                ctx.fillRect(x + off, y + off, w, h);
+                ctx.fillStyle = fill;
+                ctx.fillRect(x, y, w, h);
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#111111';
+                ctx.strokeRect(x, y, w, h);
+            };
+            drawZoneBox(60, 140, 960, 130, theme.headerBg, 8);
+            drawZoneBox(60, 290, 960, 60, theme.stripBg, 6);
+            drawZoneBox(60, 370, 960, 600, '#FFFFFF', 10);
+            drawZoneBox(60, layout.priceBox.y, layout.priceBox.w, layout.priceBox.h, '#FFFFFF', 10);
+            ctx.fillStyle = theme.variantBarBg;
+            ctx.fillRect(60, layout.priceBox.y, layout.priceBox.w, layout.priceBox.variantH);
+            ctx.strokeRect(60, layout.priceBox.y, layout.priceBox.w, layout.priceBox.variantH);
+            drawZoneBox(60, layout.footer.y, layout.footer.w, layout.footer.h, theme.footerBg, 8);
+        }
+
+        function drawPhotoPlaceholder() {
+            const px = 84;
+            const py = 396;
+            const pw = 912;
+            const ph = 548;
+
+            ctx.fillStyle = '#F3ECE1';
+            ctx.fillRect(px, py, pw, ph);
+
+            ctx.save();
+            ctx.setLineDash([12, 8]);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#B87834';
+            ctx.strokeRect(px + 20, py + 20, pw - 40, ph - 40);
+            ctx.restore();
+
+            ctx.fillStyle = '#1A1A1A';
+            ctx.fillRect(360, py + 178, 360, 44);
+            ctx.fillStyle = '#E5AC67';
+            ctx.font = "bold 20px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('[ FOTO PRODUK MENYUSUL ]', 540, py + 201);
+
+            ctx.fillStyle = '#825514';
+            fitFontSize(ctx, currentStoryProduct.name, "bold {size}px 'Space Grotesk', sans-serif", 800, 34, 22);
+            ctx.fillText(currentStoryProduct.name, 540, py + 286, 800);
+
+            ctx.fillStyle = '#57534E';
+            ctx.font = "bold 22px 'JetBrains Mono', monospace";
+            ctx.fillText(`${currentStoryProduct.brand} • ${currentStoryProduct.category}`, 540, py + 334, 800);
+            ctx.textBaseline = 'alphabetic';
+        }
+
+        // LAYER 1: Theme background asset (or brutalist fallback boxes if offline)
+        ctx.fillStyle = theme.canvasBg;
+        ctx.fillRect(0, 0, 1080, 1920);
+        if (bgImg) {
+            ctx.drawImage(bgImg, 0, 0, 1080, 1920);
+        } else {
+            drawFallbackZones();
+        }
+
+        // LAYER 2: Product photo (contained) or placeholder + SOLD OUT ribbon
+        const pRect = layout.photo;
+        if (photoImg) {
             try {
-                const targetX = 68;
-                const targetY = 308;
-                const targetW = 932;
-                const targetH = 624;
-
-                const imgW = imgObj.naturalWidth || imgObj.width;
-                const imgH = imgObj.naturalHeight || imgObj.height;
-                const scale = Math.min(targetW / imgW, targetH / imgH);
+                const imgW = photoImg.naturalWidth || photoImg.width;
+                const imgH = photoImg.naturalHeight || photoImg.height;
+                const scale = Math.min(pRect.w / imgW, pRect.h / imgH);
                 const dw = imgW * scale;
                 const dh = imgH * scale;
-                const dx = targetX + (targetW - dw) / 2;
-                const dy = targetY + (targetH - dh) / 2;
-
-                ctx.drawImage(imgObj, dx, dy, dw, dh);
+                const dx = pRect.x + (pRect.w - dw) / 2;
+                const dy = pRect.y + (pRect.h - dh) / 2;
+                ctx.drawImage(photoImg, dx, dy, dw, dh);
             } catch (e) {
-                drawFallbackGraphic();
+                storyCorsNotice?.classList.remove('d-none');
+                drawPhotoPlaceholder();
             }
         } else {
-            drawFallbackGraphic();
+            drawPhotoPlaceholder();
         }
 
         if (currentStoryProduct.isSoldOut) {
+            const so = layout.soldOut;
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(so.x + 5, so.y + 5, so.w, so.h);
             ctx.fillStyle = '#DC2626';
-            ctx.fillRect(60, 310, 340, 60);
+            ctx.fillRect(so.x, so.y, so.w, so.h);
             ctx.lineWidth = 3;
             ctx.strokeStyle = '#111111';
-            ctx.strokeRect(60, 310, 340, 60);
+            ctx.strokeRect(so.x, so.y, so.w, so.h);
             ctx.fillStyle = '#FFFFFF';
-            ctx.font = "bold 32px 'Space Grotesk', sans-serif";
+            ctx.font = "bold 30px 'Space Grotesk', sans-serif";
             ctx.textAlign = 'center';
-            ctx.fillText('SOLD OUT', 230, 352);
+            ctx.textBaseline = 'middle';
+            ctx.fillText('SOLD OUT', so.x + so.w / 2, so.y + so.h / 2 + 1);
+            ctx.textBaseline = 'alphabetic';
         }
 
-        drawProductInfo();
-        storyLoading?.classList.add('d-none');
-    }
+        // LAYER 3: Dynamic logo & typography inside safe 6-zone coordinates
+        const lBox = layout.logo;
+        if (logoImg && logoImg.naturalWidth > 0) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(lBox.x, lBox.y, lBox.w, lBox.h);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(lBox.x, lBox.y, lBox.w, lBox.h);
 
-    function drawFallbackGraphic() {
-        ctx.fillStyle = '#F3ECE1';
-        ctx.fillRect(68, 308, 932, 624);
-        ctx.fillStyle = '#825514';
-        ctx.font = "bold 34px 'Space Grotesk', sans-serif";
-        ctx.textAlign = 'center';
-        ctx.fillText(currentStoryProduct.name, 534, 600);
-        ctx.fillStyle = '#57534E';
-        ctx.font = "bold 24px 'JetBrains Mono', monospace";
-        ctx.fillText(currentStoryProduct.brand + ' • ' + currentStoryProduct.category, 534, 645);
-    }
+            const maxLogoW = lBox.w - 12;
+            const maxLogoH = lBox.h - 12;
+            const lScale = Math.min(maxLogoW / logoImg.naturalWidth, maxLogoH / logoImg.naturalHeight);
+            const lDrawW = logoImg.naturalWidth * lScale;
+            const lDrawH = logoImg.naturalHeight * lScale;
+            const lDrawX = lBox.x + (lBox.w - lDrawW) / 2;
+            const lDrawY = lBox.y + (lBox.h - lDrawH) / 2;
+            ctx.drawImage(logoImg, lDrawX, lDrawY, lDrawW, lDrawH);
+        } else {
+            ctx.fillStyle = '#B87834';
+            ctx.fillRect(lBox.x, lBox.y, lBox.w, lBox.h);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#111111';
+            ctx.strokeRect(lBox.x, lBox.y, lBox.w, lBox.h);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = "bold 40px 'Space Grotesk', sans-serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('JC', lBox.x + lBox.w / 2, lBox.y + lBox.h / 2 + 2);
+            ctx.textBaseline = 'alphabetic';
+        }
 
-    function drawProductInfo() {
-        // Brand
+        // Zona 1: Store name & subtitle
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = theme.headerText;
+        fitFontSize(ctx, STORE_NAME.toUpperCase(), "bold {size}px 'Space Grotesk', sans-serif", layout.headerTitle.maxW, 38, 22);
+        ctx.fillText(STORE_NAME.toUpperCase(), layout.headerTitle.x, layout.headerTitle.y, layout.headerTitle.maxW);
+
+        ctx.fillStyle = theme.headerSubText;
+        ctx.font = "bold 19px 'JetBrains Mono', monospace";
+        ctx.fillText(theme.headerSub, layout.headerSub.x, layout.headerSub.y, layout.headerSub.maxW);
+
+        // Zona 2: Category & badge strip
+        ctx.fillStyle = theme.stripText;
+        ctx.font = "bold 22px 'JetBrains Mono', monospace";
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        const badgePart = currentStoryProduct.badge ? `  |  ${currentStoryProduct.badge.toUpperCase()}` : '';
+        ctx.fillText(`● ${currentStoryProduct.category.toUpperCase()}${badgePart}`, layout.stripLeft.x, layout.stripLeft.y, layout.stripLeft.maxW);
+        ctx.textAlign = 'right';
+        ctx.fillText(theme.rightStripTag, layout.stripRight.x, layout.stripRight.y, layout.stripRight.maxW);
+        ctx.textBaseline = 'alphabetic';
+
+        // Zona 4: Brand, product title & optional spec chips
         ctx.textAlign = 'left';
         ctx.fillStyle = theme.brandColor;
-        ctx.font = "bold 26px 'JetBrains Mono', monospace";
-        ctx.fillText(currentStoryProduct.brand.toUpperCase() + ' ORIGINAL', 64, 985);
+        ctx.font = "bold 24px 'JetBrains Mono', monospace";
+        ctx.fillText(`${currentStoryProduct.brand.toUpperCase()} ORIGINAL`, 64, layout.brandY, 952);
 
-        // Name with wrapping (max 2 lines)
         ctx.fillStyle = theme.titleColor;
-        ctx.font = "bold 48px 'Space Grotesk', sans-serif";
-        const words = currentStoryProduct.name.split(' ');
-        let line = '';
-        let y = 1045;
-        let lineCount = 0;
-        for (let i = 0; i < words.length; i++) {
-            const testLine = line + words[i] + ' ';
-            const metrics = ctx.measureText(testLine);
-            if (metrics.width > 940 && i > 0) {
-                ctx.fillText(line.trim(), 64, y);
-                line = words[i] + ' ';
-                y += 58;
-                lineCount++;
-                if (lineCount >= 1) break;
+        ctx.font = "bold 46px 'Space Grotesk', sans-serif";
+        const words = (currentStoryProduct.name || '').split(/\s+/).filter(Boolean);
+        const titleLines = [];
+        let curLine = '';
+        for (const word of words) {
+            const candidate = curLine ? `${curLine} ${word}` : word;
+            if (ctx.measureText(candidate).width > 952 && curLine) {
+                titleLines.push(curLine);
+                curLine = word;
+                if (titleLines.length === 2) break;
             } else {
-                line = testLine;
+                curLine = candidate;
             }
         }
-        if (line.trim()) {
-            ctx.fillText(line.trim(), 64, y);
+        if (titleLines.length < 2 && curLine) {
+            titleLines.push(curLine);
+        } else if (titleLines.length === 2 && curLine) {
+            let second = titleLines[1];
+            while (second.length > 3 && ctx.measureText(`${second}...`).width > 952) {
+                second = second.slice(0, -1).trim();
+            }
+            titleLines[1] = `${second}...`;
         }
+        titleLines.forEach((ln, idx) => ctx.fillText(ln, 64, layout.nameY + idx * 56, 952));
 
-        // Specs Chips
         if (showSpecs && currentStoryProduct.specs.length > 0) {
             let specX = 64;
-            let specY = y + 42;
-            ctx.font = "bold 22px 'JetBrains Mono', monospace";
-            currentStoryProduct.specs.slice(0, 3).forEach((sp) => {
-                const spWidth = ctx.measureText(sp).width + 36;
-                if (specX + spWidth < 1000) {
-                    ctx.fillStyle = '#111111';
-                    ctx.fillRect(specX + 4, specY + 4, spWidth, 44);
+            const lastBaseline = layout.nameY + Math.max(0, titleLines.length - 1) * 56;
+            const specY = lastBaseline + (titleLines.length > 1 ? 26 : 36);
+            ctx.font = "bold 20px 'JetBrains Mono', monospace";
+            currentStoryProduct.specs.slice(0, 3).forEach((rawSp) => {
+                const sp = rawSp.length > 32 ? `${rawSp.slice(0, 29)}...` : rawSp;
+                const spWidth = ctx.measureText(sp).width + 34;
+                if (specX + spWidth <= 1020) {
+                    ctx.fillStyle = boxShadow;
+                    ctx.fillRect(specX + 4, specY + 4, spWidth, 42);
                     ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(specX, specY, spWidth, 44);
+                    ctx.fillRect(specX, specY, spWidth, 42);
                     ctx.lineWidth = 2.5;
                     ctx.strokeStyle = '#111111';
-                    ctx.strokeRect(specX, specY, spWidth, 44);
+                    ctx.strokeRect(specX, specY, spWidth, 42);
                     ctx.fillStyle = '#1A1A1A';
                     ctx.textAlign = 'left';
-                    ctx.fillText(sp, specX + 18, specY + 30);
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(sp, specX + 17, specY + 22);
+                    ctx.textBaseline = 'alphabetic';
                     specX += spWidth + 14;
                 }
             });
         }
 
-        // Price Box
-        const priceBoxY = 1250;
-        ctx.fillStyle = '#111111';
-        ctx.fillRect(68, priceBoxY + 8, 948, 310);
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(60, priceBoxY, 948, 310);
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#111111';
-        ctx.strokeRect(60, priceBoxY, 948, 310);
-
-        // Header variant bar
-        ctx.fillStyle = theme.variantBarBg;
-        ctx.fillRect(60, priceBoxY, 948, 56);
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#111111';
-        ctx.strokeRect(60, priceBoxY, 948, 56);
+        // Zona 5: Variant bar, normal/hemat row & promo price banner
+        const pb = layout.priceBox;
         ctx.fillStyle = theme.variantBarText;
-        ctx.font = "bold 24px 'JetBrains Mono', monospace";
+        ctx.font = "bold 23px 'JetBrains Mono', monospace";
         ctx.textAlign = 'left';
-        ctx.fillText(('VARIAN: ' + variant.label).substring(0, 52), 80, priceBoxY + 37);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`VARIAN: ${variant.label}`.substring(0, 54), 80, pb.y + pb.variantH / 2 + 1, 920);
+        ctx.textBaseline = 'alphabetic';
 
-        // Original price & hemat badge
-        ctx.fillStyle = '#57534E';
-        ctx.font = "bold 28px 'JetBrains Mono', monospace";
-        const origText = 'Normal: ' + formatRupiahStory(variant.original_price);
-        ctx.fillText(origText, 80, priceBoxY + 115);
-        const origWidth = ctx.measureText(origText).width;
-        ctx.strokeStyle = '#57534E';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(76, priceBoxY + 105);
-        ctx.lineTo(84 + origWidth, priceBoxY + 105);
-        ctx.stroke();
-
-        // Hemat badge
         const saveAmount = Math.max(0, variant.original_price - variant.promo_price);
         if (saveAmount > 0) {
+            ctx.fillStyle = '#57534E';
+            ctx.font = "bold 26px 'JetBrains Mono', monospace";
+            const origText = 'Normal: ' + formatRupiahStory(variant.original_price);
+            ctx.fillText(origText, 80, pb.y + 109, 580);
+            const origWidth = Math.min(580, ctx.measureText(origText).width);
+            ctx.strokeStyle = '#57534E';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(76, pb.y + 100);
+            ctx.lineTo(84 + origWidth, pb.y + 100);
+            ctx.stroke();
+
             ctx.fillStyle = '#111111';
-            ctx.fillRect(688, priceBoxY + 80, 296, 46);
+            ctx.fillRect(688, pb.y + 77, 312, 46);
             ctx.fillStyle = theme.hematBg;
-            ctx.fillRect(684, priceBoxY + 76, 296, 46);
+            ctx.fillRect(684, pb.y + 73, 312, 46);
             ctx.lineWidth = 2.5;
             ctx.strokeStyle = '#111111';
-            ctx.strokeRect(684, priceBoxY + 76, 296, 46);
+            ctx.strokeRect(684, pb.y + 73, 312, 46);
             ctx.fillStyle = theme.hematText;
-            ctx.font = "bold 22px 'JetBrains Mono', monospace";
+            ctx.font = "bold 21px 'JetBrains Mono', monospace";
             ctx.textAlign = 'center';
-            ctx.fillText('HEMAT ' + formatRupiahStory(saveAmount), 832, priceBoxY + 107);
+            ctx.textBaseline = 'middle';
+            ctx.fillText('HEMAT ' + formatRupiahStory(saveAmount), 840, pb.y + 97, 292);
+            ctx.textBaseline = 'alphabetic';
+        } else {
+            ctx.fillStyle = '#57534E';
+            ctx.font = "bold 24px 'JetBrains Mono', monospace";
+            ctx.textAlign = 'left';
+            ctx.fillText('PENAWARAN HARGA RESMI TOKO', 80, pb.y + 109, 900);
         }
 
-        // Promo Price Banner
+        // Promo banner card inside Zona 5
         ctx.fillStyle = '#111111';
-        ctx.fillRect(82, priceBoxY + 154, 908, 130);
+        ctx.fillRect(86, pb.y + 149, 920, 134);
         ctx.fillStyle = theme.promoBg;
-        ctx.fillRect(76, priceBoxY + 148, 908, 130);
+        ctx.fillRect(80, pb.y + 143, 920, 134);
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#111111';
-        ctx.strokeRect(76, priceBoxY + 148, 908, 130);
+        ctx.strokeRect(80, pb.y + 143, 920, 134);
 
         ctx.fillStyle = theme.promoText;
         ctx.textAlign = 'left';
-        ctx.font = "bold 26px 'Space Grotesk', sans-serif";
-        ctx.fillText(theme.promoHeading, 102, priceBoxY + 192);
-        ctx.font = "bold 64px 'Space Grotesk', sans-serif";
-        ctx.fillText(formatRupiahStory(variant.promo_price), 102, priceBoxY + 256);
+        ctx.font = "bold 24px 'Space Grotesk', sans-serif";
+        ctx.fillText(theme.promoHeading, 106, pb.y + 183, 650);
+
+        const promoPriceText = formatRupiahStory(variant.promo_price);
+        fitFontSize(ctx, promoPriceText, "bold {size}px 'Space Grotesk', sans-serif", 650, 64, 36);
+        ctx.fillText(promoPriceText, 106, pb.y + 251, 650);
+
         ctx.textAlign = 'right';
         ctx.font = "bold 24px 'JetBrains Mono', monospace";
-        ctx.fillText(currentStoryProduct.isSoldOut ? 'STOK HABIS' : 'READY TOKO', 952, priceBoxY + 226);
+        ctx.fillText(currentStoryProduct.isSoldOut ? 'STOK HABIS' : 'READY TOKO', 974, pb.y + 221);
 
-        // Footer CTA
-        const footerY = 1600;
-        ctx.fillStyle = '#111111';
-        ctx.fillRect(68, footerY + 8, 948, 240);
-        ctx.fillStyle = theme.footerBg;
-        ctx.fillRect(60, footerY, 948, 240);
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#111111';
-        ctx.strokeRect(60, footerY, 948, 240);
-
+        // Zona 6: Footer CTA WhatsApp
+        const ft = layout.footer;
         ctx.fillStyle = '#1A1A1A';
         ctx.textAlign = 'left';
-        ctx.font = "bold 26px 'JetBrains Mono', monospace";
-        ctx.fillText('CARA ORDER & KONSULTASI VIA WHATSAPP:', 86, footerY + 52);
+        ctx.font = "bold 22px 'JetBrains Mono', monospace";
+        ctx.fillText('CARA ORDER & KONSULTASI VIA WHATSAPP:', 86, ft.y + 38, 900);
 
         ctx.fillStyle = theme.waColor;
-        ctx.font = "bold 56px 'Space Grotesk', sans-serif";
-        ctx.fillText('+ ' + STORE_WA, 86, footerY + 118);
+        const waText = `+ ${STORE_WA}`;
+        fitFontSize(ctx, waText, "bold {size}px 'Space Grotesk', sans-serif", 900, 50, 32);
+        ctx.fillText(waText, 86, ft.y + 96, 900);
 
         ctx.fillStyle = '#1A1A1A';
-        ctx.font = "bold 22px 'Work Sans', sans-serif";
-        ctx.fillText(STORE_ADDRESS, 86, footerY + 168, 900);
+        ctx.font = "bold 21px 'Work Sans', sans-serif";
+        ctx.fillText(STORE_ADDRESS, 86, ft.y + 140, 900);
 
         ctx.fillStyle = '#57534E';
-        ctx.font = "bold 20px 'JetBrains Mono', monospace";
-        ctx.fillText(theme.footerNote, 86, footerY + 210, 900);
-    }
+        ctx.font = "bold 19px 'JetBrains Mono', monospace";
+        ctx.fillText(theme.footerNote, 86, ft.y + 176, 900);
 
-    if (photoUrl && photoUrl !== '/images/placeholder.jpg') {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            drawPhotoBox(img);
-        };
-        img.onerror = () => {
-            storyCorsNotice?.classList.remove('d-none');
-            drawPhotoBox(null);
-        };
-        img.src = photoUrl;
-    } else {
-        drawPhotoBox(null);
+        // LAYER 4: Transparent theme overlay (stickers & stamps above frame)
+        if (overlayImg) {
+            ctx.drawImage(overlayImg, 0, 0, 1080, 1920);
+        }
+    } finally {
+        if (renderId === currentStoryRenderId) {
+            storyLoading?.classList.add('d-none');
+        }
     }
 }
 
@@ -1742,7 +1684,7 @@ document.querySelectorAll('.story-btn').forEach((btn) => {
             brand,
             category,
             badge,
-            images: rawImages.length ? rawImages : ['/images/placeholder.jpg'],
+            images: rawImages,
             specs,
             variants: variants.length ? variants : [{ label: 'Unit Lengkap', promo_price: 1000000, original_price: 1200000 }],
             isSoldOut
@@ -1757,12 +1699,19 @@ document.querySelectorAll('.story-btn').forEach((btn) => {
         });
 
         storyPhotoSelect.innerHTML = '';
-        currentStoryProduct.images.forEach((imgUrl, idx) => {
+        if (currentStoryProduct.images.length > 0) {
+            currentStoryProduct.images.forEach((imgUrl, idx) => {
+                const opt = document.createElement('option');
+                opt.value = imgUrl;
+                opt.textContent = `Foto ${idx + 1} (${imgUrl.startsWith('/uploads/') ? 'Upload Lokal' : 'Web/URL'})`;
+                storyPhotoSelect.appendChild(opt);
+            });
+        } else {
             const opt = document.createElement('option');
-            opt.value = imgUrl;
-            opt.textContent = `Foto ${idx + 1} (${imgUrl.startsWith('/uploads/') ? 'Upload Lokal' : 'Web/URL'})`;
+            opt.value = '';
+            opt.textContent = 'Belum Ada Foto (Gunakan Placeholder)';
             storyPhotoSelect.appendChild(opt);
-        });
+        }
 
         storyCorsNotice?.classList.add('d-none');
         storyCopyFeedback?.classList.add('d-none');
