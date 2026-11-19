@@ -156,6 +156,10 @@
         $faqsText = implode("\n", array_map(function($faq) {
             return ($faq['q'] ?? '') . ' | ' . ($faq['a'] ?? '');
         }, $catalog['faqs'] ?? []));
+
+        $trustStatsText = implode("\n", array_map(function($stat) {
+            return ($stat['value'] ?? '') . ' | ' . ($stat['label'] ?? '');
+        }, $catalog['trust_stats'] ?? []));
     @endphp
 
     <div class="row g-4">
@@ -262,6 +266,14 @@
 
                         <!-- TAB 3: TENTANG & FAQ -->
                         <div class="tab-pane fade" id="tab-konten" role="tabpanel" aria-labelledby="tab-konten-btn">
+                            <h3 class="h6 fw-bold mb-2">Strip Info / Highlight Hero</h3>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold" for="f-trust-stats">Kolom Info Highlight (1 baris: <code>Angka/Judul | Keterangan</code>)</label>
+                                <textarea name="trust_stats_text" id="f-trust-stats" rows="4" class="form-control form-control-sm font-monospace small" placeholder="7 Hari | Garansi Tukar Baru">{{ old('trust_stats_text', $trustStatsText) }}</textarea>
+                                <div class="form-text small">Opsional variabel otomatis: <code>{ready_count}</code>, <code>{category_count}</code>, <code>{total_count}</code>. Kosongkan untuk menyembunyikan strip ini.</div>
+                            </div>
+
+                            <hr class="border-2 border-dark opacity-100">
                             <h3 class="h6 fw-bold mb-2">Konten #tentang-kami</h3>
                             <div class="mb-2">
                                 <label class="form-label small fw-semibold" for="f-about-title">Judul Section Keunggulan</label>

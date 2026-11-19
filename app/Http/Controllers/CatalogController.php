@@ -65,6 +65,7 @@ class CatalogController extends Controller
                 $decoded['map_image'] = $decoded['map_image'] ?? ($default['map_image'] ?? '');
                 $decoded['map_link'] = $decoded['map_link'] ?? ($default['map_link'] ?? 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8');
                 $decoded['faqs'] = $decoded['faqs'] ?? ($default['faqs'] ?? []);
+                $decoded['trust_stats'] = $decoded['trust_stats'] ?? ($default['trust_stats'] ?? []);
                 $decoded['instagram_url'] = $decoded['instagram_url'] ?? ($default['instagram_url'] ?? '');
                 $decoded['tiktok_url'] = $decoded['tiktok_url'] ?? ($default['tiktok_url'] ?? '');
                 $decoded['facebook_url'] = $decoded['facebook_url'] ?? ($default['facebook_url'] ?? '');
@@ -190,6 +191,7 @@ class CatalogController extends Controller
             'map_image' => 'nullable|string|max:1000',
             'map_link' => 'nullable|string|max:1000',
             'faq_text' => 'nullable|string|max:4000',
+            'trust_stats_text' => 'nullable|string|max:1500',
             'instagram_url' => 'nullable|url|max:255',
             'tiktok_url' => 'nullable|url|max:255',
             'facebook_url' => 'nullable|url|max:255',
@@ -265,23 +267,31 @@ class CatalogController extends Controller
             $catalog['map_link'] = (string) ($data['map_link'] ?? '');
         }
         if (array_key_exists('faq_text', $data)) {
-            $faqs = [];
-            foreach (preg_split('/\r\n|\r|\n/', (string) ($data['faq_text'] ?? '')) as $line) {
-                $line = trim($line);
-                if ($line === '') continue;
-                $parts = array_map('trim', explode('|', $line, 2));
-                if (!empty($parts[0])) {
-                    $faqs[] = [
-                        'q' => $parts[0],
-                        'a' => $parts[1] ?? '',
-                    ];
-                }
-            }
-            $catalog['faqs'] = $faqs;
+            $catalog['faqs'] = $this->parsePipePairs((string) ($data['faq_text'] ?? ''), 'q', 'a');
+        }
+        if (array_key_exists('trust_stats_text', $data)) {
+            $catalog['trust_stats'] = $this->parsePipePairs((string) ($data['trust_stats_text'] ?? ''), 'value', 'label');
         }
 
         $this->saveCatalog($catalog);
         return redirect('/admin')->with('status', 'Pengaturan toko, hero deal, tentang kami & kontak berhasil diperbarui.');
+    }
+
+    private function parsePipePairs(string $text, string $firstKey, string $secondKey): array
+    {
+        $items = [];
+        foreach (preg_split('/\r\n|\r|\n/', $text) as $line) {
+            $line = trim($line);
+            if ($line === '') continue;
+            $parts = array_map('trim', explode('|', $line, 2));
+            if (!empty($parts[0])) {
+                $items[] = [
+                    $firstKey => $parts[0],
+                    $secondKey => $parts[1] ?? '',
+                ];
+            }
+        }
+        return $items;
     }
 
     // shortcut: compresses server-side if GD is present; client-side canvas handles compression before upload when GD is absent

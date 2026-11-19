@@ -22,6 +22,13 @@ return [
 
     'categories' => ['Semua', 'Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'],
 
+    'trust_stats' => [
+        ['value' => '{ready_count} Unit', 'label' => 'Ready Stock Katalog'],
+        ['value' => '{category_count} Kategori', 'label' => 'Pilihan Hardware'],
+        ['value' => '7 Hari', 'label' => 'Garansi Tukar Baru'],
+        ['value' => 'Gratis OS', 'label' => 'Setup Siap Pakai'],
+    ],
+
     'about_title' => 'KEUNGGULAN JAVA COMPUTER',
     'about_subtitle' => 'Kami bukan sekadar penjual e-commerce biasa. Kami bengkel hardware dan pusat konsultasi komputer fisik yang beroperasi nyata setiap hari.',
     'about_features' => [
@@ -123,8 +130,8 @@ return [
             'image' => 'https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?auto=format&fit=crop&w=800&q=80',
             'specs' => ['Termasuk 1 Set Tinta Original', 'Hasil Cetak Dokumen & Foto Tajam', 'Garansi Resmi Epson'],
             'variants' => [
-                ['label' => 'EcoTank L121 (Print Only — Ekonomis)', 'promo_price' => 1750000, 'original_price' => 1950000],
-                ['label' => 'EcoTank L3210 (Print, Scan, Copy — USB)', 'promo_price' => 2350000, 'original_price' => 2650000],
+                ['label' => 'EcoTank L121 (Print Only - Ekonomis)', 'promo_price' => 1750000, 'original_price' => 1950000],
+                ['label' => 'EcoTank L3210 (Print, Scan, Copy - USB)', 'promo_price' => 2350000, 'original_price' => 2650000],
                 ['label' => 'EcoTank L3250 (Print, Scan, Copy + WiFi Direct)', 'promo_price' => 2690000, 'original_price' => 2990000],
             ],
         ],

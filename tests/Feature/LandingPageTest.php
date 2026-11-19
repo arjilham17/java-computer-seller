@@ -270,14 +270,21 @@ class LandingPageTest extends TestCase
             'map_image' => 'https://example.com/custom-map.png',
             'map_link' => 'https://maps.app.goo.gl/custom-location',
             'faq_text' => "Apakah bisa rakit langsung di tempat? | Ya, teknisi kami dapat merakit di depan Anda langsung.\nApakah ada garansi toko? | Ya, ada garansi tukar baru 7 hari pertama.",
+            'trust_stats_text' => "{ready_count} Unit Ready | Stok Aktual Toko\nGaransi 14 Hari | Tukar Unit Baru",
         ];
 
         $this->post('/admin/settings', $settings)
             ->assertRedirect('/admin')
             ->assertSessionHasNoErrors();
 
+        $this->get('/admin')->assertSee('id="f-trust-stats"', false);
+
         $home = $this->get('/');
         $home->assertStatus(200);
+        $home->assertSee('6 Unit Ready');
+        $home->assertSee('Stok Aktual Toko');
+        $home->assertSee('Garansi 14 Hari');
+        $home->assertSee('Tukar Unit Baru');
         $home->assertSee('KEUNGGULAN UTAMA WORKSHOP KAMI');
         $home->assertSee('Layanan rakit PC spesialis gaming & workstation.');
         $home->assertSee('Komponen 100% Asli');
@@ -619,5 +626,91 @@ class LandingPageTest extends TestCase
 
         $this->post('/admin/login', ['password' => 'new-secure-pass-123'])
             ->assertRedirect('/admin');
+    }
+
+    public function test_landing_page_ui_ux_improvements_and_guardrails(): void
+    {
+        $response = $this->get('/');
+        $response->assertStatus(200);
+        $html = $response->getContent();
+
+        // Balanced <section> tags & zero em dashes or fabricated claims
+        $this->assertSame(substr_count($html, '<section'), substr_count($html, '</section>'));
+        $this->assertStringNotContainsString("\u{2014}", $html);
+        $response->assertDontSee('3.800+');
+        $response->assertDontSee('4.9 / 5.0');
+        $response->assertDontSee('Rian Pratama');
+        $response->assertDontSee('Hemat Rp 0');
+
+        // Navigation, accessibility, UX controls & Open Graph metadata
+        $response->assertSee('Lewati ke Katalog Produk');
+        $response->assertSee('id="mobile-menu-btn"', false);
+        $response->assertSee('id="mobile-nav-drawer"', false);
+        $response->assertSee('brutal-marquee', false);
+        $response->assertDontSee('id="marquee-toggle"', false);
+        $response->assertSee('id="catalog-sort"', false);
+        $response->assertSee('id="catalog-ready-only"', false);
+        $response->assertSee('id="catalog-search-clear"', false);
+        $response->assertSee('id="catalog-reset-btn"', false);
+        $response->assertSee('id="catalog-result-count"', false);
+        $response->assertSee('id="product-lightbox"', false);
+        $response->assertSee('copy-link-btn', false);
+        $response->assertSee('fetchpriority="high"', false);
+        $response->assertSee('property="og:title"', false);
+        $response->assertSee('Lihat Ulasan Asli di Google Maps');
+
+        // Edge case: equal original/promo price & sold-out product omits qty input, empty FAQ/about renders gracefully
+        $this->withSession(['admin_authenticated' => true]);
+        $this->post('/admin/settings', [
+            'store_name' => 'Java Test Store',
+            'tagline' => 'Tagline Toko',
+            'whatsapp_number' => '6281234567890',
+            'address' => 'Jl. Test',
+            'hours' => '09.00 - 17.00',
+            'hero_badge' => 'FLASH',
+            'hero_title' => 'Hero Tanpa Diskon',
+            'hero_subtitle' => 'Spec 1',
+            'hero_original_price' => 5000000,
+            'hero_promo_price' => 5000000,
+            'hero_bonus' => 'Bonus Unit',
+            'about_features_text' => '',
+            'faq_text' => '',
+            'trust_stats_text' => '',
+            'map_image' => '',
+            'instagram_url' => '',
+            'tiktok_url' => '',
+            'facebook_url' => '',
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        foreach (config('catalog.products') as $p) {
+            $this->delete('/admin/products/' . $p['id']);
+        }
+
+        $tinyPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+        $soldPhoto = \Illuminate\Http\UploadedFile::fake()->createWithContent('sold.png', $tinyPng);
+
+        $this->post('/admin/products', [
+            'id' => 'pc-tanpa-diskon-sold',
+            'name' => 'PC Tanpa Diskon Sold Out',
+            'brand' => 'Custom',
+            'category' => 'PC',
+            'badge' => 'Custom',
+            'photos' => [$soldPhoto],
+            'specs_text' => 'Spec A',
+            'variants_text' => 'Unit | 4000000 | 4000000',
+            'is_sold_out' => '1',
+        ])->assertRedirect('/admin')->assertSessionHasNoErrors();
+
+        $edge = $this->get('/');
+        $edge->assertStatus(200);
+        $edge->assertDontSee('class="qty-input', false);
+        $edge->assertDontSee('HEMAT RP 0');
+        $edge->assertDontSee('Hemat Rp 0');
+        $edge->assertDontSee('Ready Stock Katalog');
+        $edge->assertSee('Belum ada daftar pertanyaan ditambahkan');
+
+        foreach (glob(public_path('uploads/products/pc-tanpa-diskon-sold-*')) ?: [] as $f) {
+            @unlink($f);
+        }
     }
 }
