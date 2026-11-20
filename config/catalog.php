@@ -20,6 +20,24 @@ return [
         'bonus' => 'Hemat Rp 600.000 + Gratis Tas & Instalasi Aplikasi',
     ],
 
+    'hero_badges' => [
+        [
+            'title' => 'Garansi Jelas',
+            'desc' => 'Garansi resmi distributor dan tukar baru toko 7 hari.',
+            'icon' => 'verified',
+        ],
+        [
+            'title' => 'Konsultasi 1-on-1',
+            'desc' => 'Konsultasi spek dan budget langsung dengan teknisi.',
+            'icon' => 'support_agent',
+        ],
+        [
+            'title' => 'Kirim atau Ambil',
+            'desc' => 'Cek unit di workshop atau kirim packing kayu aman.',
+            'icon' => 'local_shipping',
+        ],
+    ],
+
     'categories' => ['Semua', 'Laptop', 'PC', 'Printer', 'Monitor', 'Aksesoris'],
 
     'trust_stats' => [

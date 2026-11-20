@@ -262,6 +262,7 @@ class LandingPageTest extends TestCase
             'hero_original_price' => 35000000,
             'hero_promo_price' => 32000000,
             'hero_bonus' => 'Bonus Keyboard Mechanical',
+            'hero_badges_text' => "Garansi Tukar 14 Hari | Unit diganti baru jika ada kendala pabrik | workspace_premium\nRakitan Rapi | Manajemen kabel presisi dan airflow optimal | build\nKirim Instan | Siap kirim kurir toko atau packing kayu | rocket_launch",
             'about_title' => 'KEUNGGULAN UTAMA WORKSHOP KAMI',
             'about_subtitle' => 'Layanan rakit PC spesialis gaming & workstation.',
             'about_features_text' => "Komponen 100% Asli | Bergaransi distributor resmi dan ada nota fisik | verified_user\nTeknisi Berpengalaman | Siap bantu uji performa dan instalasi sistem",
@@ -277,10 +278,20 @@ class LandingPageTest extends TestCase
             ->assertRedirect('/admin')
             ->assertSessionHasNoErrors();
 
-        $this->get('/admin')->assertSee('id="f-trust-stats"', false);
+        $this->get('/admin')
+            ->assertSee('id="f-trust-stats"', false)
+            ->assertSee('id="f-hero-badges"', false)
+            ->assertSee('data-icon="workspace_premium"', false)
+            ->assertSee('data-icon="rocket_launch"', false);
 
         $home = $this->get('/');
         $home->assertStatus(200);
+        $home->assertSee('Garansi Tukar 14 Hari');
+        $home->assertSee('Unit diganti baru jika ada kendala pabrik');
+        $home->assertSee('Rakitan Rapi');
+        $home->assertSee('Kirim Instan');
+        $home->assertSee('workspace_premium', false);
+        $home->assertSee('rocket_launch', false);
         $home->assertSee('6 Unit Ready');
         $home->assertSee('Stok Aktual Toko');
         $home->assertSee('Garansi 14 Hari');

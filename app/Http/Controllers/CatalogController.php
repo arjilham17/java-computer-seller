@@ -66,6 +66,7 @@ class CatalogController extends Controller
                 $decoded['map_link'] = $decoded['map_link'] ?? ($default['map_link'] ?? 'https://maps.app.goo.gl/qmSLZJgEqVFwbqXh8');
                 $decoded['faqs'] = $decoded['faqs'] ?? ($default['faqs'] ?? []);
                 $decoded['trust_stats'] = $decoded['trust_stats'] ?? ($default['trust_stats'] ?? []);
+                $decoded['hero_badges'] = $decoded['hero_badges'] ?? ($default['hero_badges'] ?? []);
                 $decoded['instagram_url'] = $decoded['instagram_url'] ?? ($default['instagram_url'] ?? '');
                 $decoded['tiktok_url'] = $decoded['tiktok_url'] ?? ($default['tiktok_url'] ?? '');
                 $decoded['facebook_url'] = $decoded['facebook_url'] ?? ($default['facebook_url'] ?? '');
@@ -192,6 +193,7 @@ class CatalogController extends Controller
             'map_link' => 'nullable|string|max:1000',
             'faq_text' => 'nullable|string|max:4000',
             'trust_stats_text' => 'nullable|string|max:1500',
+            'hero_badges_text' => 'nullable|string|max:2000',
             'instagram_url' => 'nullable|url|max:255',
             'tiktok_url' => 'nullable|url|max:255',
             'facebook_url' => 'nullable|url|max:255',
@@ -238,21 +240,16 @@ class CatalogController extends Controller
             $catalog['about_subtitle'] = (string) ($data['about_subtitle'] ?? '');
         }
         if (array_key_exists('about_features_text', $data)) {
-            $icons = ['verified_user', 'inventory', 'terminal', 'headset_mic', 'build', 'thumb_up'];
-            $features = [];
-            foreach (preg_split('/\r\n|\r|\n/', (string) ($data['about_features_text'] ?? '')) as $idx => $line) {
-                $line = trim($line);
-                if ($line === '') continue;
-                $parts = array_map('trim', explode('|', $line, 3));
-                if (!empty($parts[0])) {
-                    $features[] = [
-                        'title' => $parts[0],
-                        'desc' => $parts[1] ?? '',
-                        'icon' => !empty($parts[2]) ? $parts[2] : ($icons[$idx % count($icons)]),
-                    ];
-                }
-            }
-            $catalog['about_features'] = $features;
+            $catalog['about_features'] = $this->parseFeatureTriples(
+                (string) ($data['about_features_text'] ?? ''),
+                ['verified_user', 'inventory', 'terminal', 'headset_mic', 'build', 'thumb_up']
+            );
+        }
+        if (array_key_exists('hero_badges_text', $data)) {
+            $catalog['hero_badges'] = $this->parseFeatureTriples(
+                (string) ($data['hero_badges_text'] ?? ''),
+                ['verified', 'support_agent', 'local_shipping', 'bolt', 'shield', 'build']
+            );
         }
         if (array_key_exists('contact_title', $data)) {
             $catalog['contact_title'] = (string) ($data['contact_title'] ?? '');
@@ -288,6 +285,24 @@ class CatalogController extends Controller
                 $items[] = [
                     $firstKey => $parts[0],
                     $secondKey => $parts[1] ?? '',
+                ];
+            }
+        }
+        return $items;
+    }
+
+    private function parseFeatureTriples(string $text, array $defaultIcons): array
+    {
+        $items = [];
+        foreach (preg_split('/\r\n|\r|\n/', $text) as $idx => $line) {
+            $line = trim($line);
+            if ($line === '') continue;
+            $parts = array_map('trim', explode('|', $line, 3));
+            if (!empty($parts[0])) {
+                $items[] = [
+                    'title' => $parts[0],
+                    'desc' => $parts[1] ?? '',
+                    'icon' => !empty($parts[2]) ? $parts[2] : ($defaultIcons[$idx % count($defaultIcons)]),
                 ];
             }
         }

@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700&amp;family=Space+Grotesk:wght@600;700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -111,6 +112,71 @@
             background-color: #E5AC67;
             outline: 2px solid #111111;
         }
+        .icon-picker-details {
+            border: 2px solid #111111;
+            background-color: #F3ECE1;
+        }
+        .icon-picker-details summary {
+            padding: 0.45rem 0.65rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            background-color: #E5AC67;
+            color: #1A1A1A;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .icon-picker-details summary::-webkit-details-marker {
+            display: none;
+        }
+        .icon-picker-body {
+            padding: 0.6rem;
+            border-top: 2px solid #111111;
+            max-height: 270px;
+            overflow-y: auto;
+            background-color: #fcf9f3;
+        }
+        .icon-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+            gap: 6px;
+        }
+        .icon-pick-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 4px;
+            background-color: #ffffff;
+            color: #1A1A1A;
+            border: 1.5px solid #111111;
+            text-align: center;
+            transition: background-color 0.12s ease, transform 0.1s ease;
+        }
+        .icon-pick-btn:hover, .icon-pick-btn:focus-visible {
+            background-color: #E5AC67;
+            color: #1A1A1A;
+            outline: 2px solid #111111;
+            transform: translateY(-1px);
+        }
+        .icon-pick-btn .material-symbols-outlined {
+            font-size: 20px;
+            line-height: 1;
+        }
+        .icon-pick-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+        .icon-pick-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: #4e4539;
+        }
     </style>
 </head>
 <body>
@@ -160,6 +226,75 @@
         $trustStatsText = implode("\n", array_map(function($stat) {
             return ($stat['value'] ?? '') . ' | ' . ($stat['label'] ?? '');
         }, $catalog['trust_stats'] ?? []));
+
+        $heroBadgesText = implode("\n", array_map(function($b) {
+            $line = ($b['title'] ?? '') . ' | ' . ($b['desc'] ?? '');
+            if (!empty($b['icon'])) {
+                $line .= ' | ' . $b['icon'];
+            }
+            return $line;
+        }, $catalog['hero_badges'] ?? []));
+
+        $iconCatalog = [
+            'Garansi & Keamanan' => [
+                ['code' => 'verified', 'label' => 'Terverifikasi'],
+                ['code' => 'verified_user', 'label' => 'Perisai Garansi'],
+                ['code' => 'shield', 'label' => 'Perisai Proteksi'],
+                ['code' => 'gpp_good', 'label' => 'Keamanan Resmi'],
+                ['code' => 'workspace_premium', 'label' => 'Medali Kualitas'],
+                ['code' => 'military_tech', 'label' => 'Bintang Juara'],
+                ['code' => 'check_circle', 'label' => 'Centang Bulat'],
+                ['code' => 'task_alt', 'label' => 'Lolos Uji QC'],
+                ['code' => 'new_releases', 'label' => 'Segel / Baru'],
+                ['code' => 'thumb_up', 'label' => 'Rekomendasi'],
+            ],
+            'Layanan & Teknisi' => [
+                ['code' => 'support_agent', 'label' => 'Konsultasi CS'],
+                ['code' => 'headset_mic', 'label' => 'Support Teknisi'],
+                ['code' => 'chat', 'label' => 'Chat WhatsApp'],
+                ['code' => 'forum', 'label' => 'Diskusi 1-on-1'],
+                ['code' => 'build', 'label' => 'Rakit / Servis'],
+                ['code' => 'handyman', 'label' => 'Peralatan'],
+                ['code' => 'engineering', 'label' => 'Ahli Hardware'],
+                ['code' => 'troubleshoot', 'label' => 'Cek Fisik'],
+                ['code' => 'tune', 'label' => 'Custom Spek'],
+                ['code' => 'terminal', 'label' => 'Gratis Software'],
+            ],
+            'Pengiriman & Toko' => [
+                ['code' => 'local_shipping', 'label' => 'Kirim Kurir'],
+                ['code' => 'inventory', 'label' => 'Packing Kayu'],
+                ['code' => 'inventory_2', 'label' => 'Stok Gudang'],
+                ['code' => 'package_2', 'label' => 'Paket Aman'],
+                ['code' => 'storefront', 'label' => 'Toko Fisik'],
+                ['code' => 'location_on', 'label' => 'Lokasi / COD'],
+                ['code' => 'schedule', 'label' => 'Respon Cepat'],
+                ['code' => 'bolt', 'label' => 'Proses Kilat'],
+                ['code' => 'rocket_launch', 'label' => 'Siap Pakai'],
+                ['code' => 'handshake', 'label' => 'Serah Terima'],
+            ],
+            'Hardware & Komputer' => [
+                ['code' => 'laptop_mac', 'label' => 'Laptop'],
+                ['code' => 'computer', 'label' => 'PC Desktop'],
+                ['code' => 'desktop_windows', 'label' => 'Monitor'],
+                ['code' => 'memory', 'label' => 'CPU / RAM'],
+                ['code' => 'hard_drive', 'label' => 'SSD / Storage'],
+                ['code' => 'print', 'label' => 'Printer'],
+                ['code' => 'keyboard', 'label' => 'Keyboard'],
+                ['code' => 'mouse', 'label' => 'Mouse'],
+                ['code' => 'headphones', 'label' => 'Headset / Audio'],
+                ['code' => 'router', 'label' => 'Jaringan / WiFi'],
+                ['code' => 'videogame_asset', 'label' => 'Gaming Gear'],
+                ['code' => 'battery_charging_full', 'label' => 'Baterai Awet'],
+            ],
+            'Harga & Promo' => [
+                ['code' => 'sell', 'label' => 'Harga Terbaik'],
+                ['code' => 'local_offer', 'label' => 'Diskon Promo'],
+                ['code' => 'payments', 'label' => 'Transaksi Aman'],
+                ['code' => 'savings', 'label' => 'Hemat Budget'],
+                ['code' => 'redeem', 'label' => 'Bonus Gratis'],
+                ['code' => 'local_fire_department', 'label' => 'Flash Deal'],
+            ],
+        ];
     @endphp
 
     <div class="row g-4">
@@ -262,6 +397,49 @@
                                 <label class="form-label small fw-semibold" for="f-hero-bonus">Info Bonus / Hemat</label>
                                 <input type="text" name="hero_bonus" id="f-hero-bonus" class="form-control form-control-sm" value="{{ old('hero_bonus', $catalog['hero_deal']['bonus']) }}" required>
                             </div>
+
+                            <hr class="border-2 border-dark opacity-100">
+                            <h3 class="h6 fw-bold mb-2">3 Kotak Poin Hero (Bawah Tagline)</h3>
+                            <div class="mb-2">
+                                <label class="form-label small fw-semibold" for="f-hero-badges">Isi Kotak Hero (1 baris per kotak: <code>Judul | Deskripsi | Icon</code>)</label>
+                                <textarea name="hero_badges_text" id="f-hero-badges" rows="3" class="form-control form-control-sm font-monospace small" placeholder="Garansi Jelas | Garansi resmi distributor dan tukar baru toko 7 hari. | verified">{{ old('hero_badges_text', $heroBadgesText) }}</textarea>
+                                <div class="form-text small">Taruh kursor pada baris yang ingin diubah, lalu klik salah satu ikon di bawah untuk mengganti ikon baris tersebut.</div>
+                            </div>
+                            <details class="icon-picker-details mb-3" data-picker-for="f-hero-badges">
+                                <summary>
+                                    <span>Pilih Icon Kotak Hero (48 Pilihan Icon)</span>
+                                    <span class="small font-monospace">▼ Klik Buka/Tutup</span>
+                                </summary>
+                                <div class="icon-picker-body">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <label class="small fw-bold mb-0" for="line-select-hero">Terapkan ke:</label>
+                                            <select id="line-select-hero" class="form-select form-select-sm py-0 px-2 icon-line-select" data-target="f-hero-badges" style="width: auto; font-size: 0.75rem;">
+                                                <option value="cursor">Baris Kursor Aktif</option>
+                                                <option value="0">Kotak 1 (Baris 1)</option>
+                                                <option value="1">Kotak 2 (Baris 2)</option>
+                                                <option value="2">Kotak 3 (Baris 3)</option>
+                                            </select>
+                                        </div>
+                                        <input type="search" class="form-control form-control-sm py-0 px-2 icon-search-input" placeholder="Cari icon (mis: garansi, kirim, laptop)..." style="max-width: 210px; font-size: 0.75rem;">
+                                    </div>
+                                    <div class="icon-feedback small fw-bold text-success mb-2 d-none" role="status"></div>
+                                    @foreach ($iconCatalog as $groupName => $groupIcons)
+                                        <div class="icon-group mb-2">
+                                            <div class="small fw-bold text-uppercase mb-1" style="font-size: 0.68rem; letter-spacing: 0.04em; color: #663e00;">{{ $groupName }}</div>
+                                            <div class="icon-picker-grid">
+                                                @foreach ($groupIcons as $ic)
+                                                    <button type="button" class="icon-pick-btn" data-target="f-hero-badges" data-icon="{{ $ic['code'] }}" data-search="{{ strtolower($ic['label'] . ' ' . $ic['code'] . ' ' . $groupName) }}">
+                                                        <span class="material-symbols-outlined" aria-hidden="true">{{ $ic['code'] }}</span>
+                                                        <span class="icon-pick-label">{{ $ic['label'] }}</span>
+                                                        <span class="icon-pick-code">{{ $ic['code'] }}</span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </details>
                         </div>
 
                         <!-- TAB 3: TENTANG & FAQ -->
@@ -283,10 +461,46 @@
                                 <label class="form-label small fw-semibold" for="f-about-subtitle">Deskripsi Section</label>
                                 <textarea name="about_subtitle" id="f-about-subtitle" rows="2" class="form-control form-control-sm">{{ old('about_subtitle', $catalog['about_subtitle'] ?? '') }}</textarea>
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-2">
                                 <label class="form-label small fw-semibold" for="f-about-features">Poin Keunggulan (1 baris per item: <code>Judul | Deskripsi | Icon</code>)</label>
-                                <textarea name="about_features_text" id="f-about-features" rows="3" class="form-control form-control-sm font-monospace small">{{ old('about_features_text', $aboutFeaturesText) }}</textarea>
+                                <textarea name="about_features_text" id="f-about-features" rows="4" class="form-control form-control-sm font-monospace small">{{ old('about_features_text', $aboutFeaturesText) }}</textarea>
                             </div>
+                            <details class="icon-picker-details mb-3" data-picker-for="f-about-features">
+                                <summary>
+                                    <span>Pilih Icon Keunggulan Toko (48 Pilihan Icon)</span>
+                                    <span class="small font-monospace">▼ Klik Buka/Tutup</span>
+                                </summary>
+                                <div class="icon-picker-body">
+                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <label class="small fw-bold mb-0" for="line-select-about">Terapkan ke:</label>
+                                            <select id="line-select-about" class="form-select form-select-sm py-0 px-2 icon-line-select" data-target="f-about-features" style="width: auto; font-size: 0.75rem;">
+                                                <option value="cursor">Baris Kursor Aktif</option>
+                                                <option value="0">Kartu 1 (Baris 1)</option>
+                                                <option value="1">Kartu 2 (Baris 2)</option>
+                                                <option value="2">Kartu 3 (Baris 3)</option>
+                                                <option value="3">Kartu 4 (Baris 4)</option>
+                                            </select>
+                                        </div>
+                                        <input type="search" class="form-control form-control-sm py-0 px-2 icon-search-input" placeholder="Cari icon (mis: garansi, kirim, laptop)..." style="max-width: 210px; font-size: 0.75rem;">
+                                    </div>
+                                    <div class="icon-feedback small fw-bold text-success mb-2 d-none" role="status"></div>
+                                    @foreach ($iconCatalog as $groupName => $groupIcons)
+                                        <div class="icon-group mb-2">
+                                            <div class="small fw-bold text-uppercase mb-1" style="font-size: 0.68rem; letter-spacing: 0.04em; color: #663e00;">{{ $groupName }}</div>
+                                            <div class="icon-picker-grid">
+                                                @foreach ($groupIcons as $ic)
+                                                    <button type="button" class="icon-pick-btn" data-target="f-about-features" data-icon="{{ $ic['code'] }}" data-search="{{ strtolower($ic['label'] . ' ' . $ic['code'] . ' ' . $groupName) }}">
+                                                        <span class="material-symbols-outlined" aria-hidden="true">{{ $ic['code'] }}</span>
+                                                        <span class="icon-pick-label">{{ $ic['label'] }}</span>
+                                                        <span class="icon-pick-code">{{ $ic['code'] }}</span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </details>
 
                             <hr class="border-2 border-dark opacity-100">
                             <h3 class="h6 fw-bold mb-2">Konten #kontak &amp; FAQ</h3>
@@ -1817,6 +2031,82 @@ btnCopyCaption?.addEventListener('click', async () => {
         storyCaptionText.select();
         document.execCommand('copy');
     }
+});
+
+// Interactive Visual Icon Picker for Hero Badges & About Features
+const lastActiveLineByTarget = { 'f-hero-badges': 0, 'f-about-features': 0 };
+
+['f-hero-badges', 'f-about-features'].forEach((targetId) => {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const recordCursorLine = () => {
+        const pos = textarea.selectionStart || 0;
+        const lineIdx = textarea.value.slice(0, pos).split(/\r\n|\r|\n/).length - 1;
+        lastActiveLineByTarget[targetId] = Math.max(0, lineIdx);
+    };
+    textarea.addEventListener('click', recordCursorLine);
+    textarea.addEventListener('keyup', recordCursorLine);
+});
+
+document.querySelectorAll('.icon-search-input').forEach((input) => {
+    input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        const container = input.closest('.icon-picker-body');
+        if (!container) return;
+        container.querySelectorAll('.icon-group').forEach((group) => {
+            let visibleInGroup = 0;
+            group.querySelectorAll('.icon-pick-btn').forEach((btn) => {
+                const hay = btn.getAttribute('data-search') || '';
+                const match = q === '' || hay.includes(q);
+                btn.classList.toggle('d-none', !match);
+                if (match) visibleInGroup++;
+            });
+            group.classList.toggle('d-none', visibleInGroup === 0);
+        });
+    });
+});
+
+document.querySelectorAll('.icon-pick-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+        const targetId = btn.getAttribute('data-target');
+        const iconCode = btn.getAttribute('data-icon');
+        const textarea = targetId ? document.getElementById(targetId) : null;
+        if (!textarea || !iconCode) return;
+
+        const container = btn.closest('.icon-picker-body');
+        const lineSelect = container?.querySelector('.icon-line-select');
+        const rawLines = textarea.value.split(/\r\n|\r|\n/);
+        while (rawLines.length > 1 && rawLines[rawLines.length - 1].trim() === '') {
+            rawLines.pop();
+        }
+        if (rawLines.length === 0 || (rawLines.length === 1 && rawLines[0].trim() === '')) {
+            rawLines[0] = `Judul Poin | Deskripsi singkat | ${iconCode}`;
+        }
+
+        let targetLineIdx = lastActiveLineByTarget[targetId] ?? 0;
+        if (lineSelect && lineSelect.value !== 'cursor') {
+            targetLineIdx = parseInt(lineSelect.value, 10) || 0;
+        }
+        if (targetLineIdx >= rawLines.length) {
+            targetLineIdx = Math.max(0, rawLines.length - 1);
+        }
+
+        const parts = rawLines[targetLineIdx].split('|').map((s) => s.trim());
+        const title = parts[0] || `Poin ${targetLineIdx + 1}`;
+        const desc = parts[1] || 'Deskripsi singkat keunggulan';
+        rawLines[targetLineIdx] = `${title} | ${desc} | ${iconCode}`;
+        textarea.value = rawLines.join('\n');
+
+        try {
+            await navigator.clipboard.writeText(iconCode);
+        } catch (e) {}
+
+        const feedback = container?.querySelector('.icon-feedback');
+        if (feedback) {
+            feedback.textContent = `✓ Icon "${iconCode}" diterapkan ke Baris ${targetLineIdx + 1} (${title})! Jangan lupa klik Simpan Pengaturan.`;
+            feedback.classList.remove('d-none');
+        }
+    });
 });
 </script>
 </body>
