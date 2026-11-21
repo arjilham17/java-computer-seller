@@ -724,4 +724,28 @@ class LandingPageTest extends TestCase
             @unlink($f);
         }
     }
+
+    public function test_admin_dashboard_includes_client_side_video_framer_without_server_upload_route(): void
+    {
+        $this->withSession(['admin_authenticated' => true]);
+        $admin = $this->get('/admin');
+        $admin->assertStatus(200);
+        $admin->assertSee('id="btn-open-video-framer"', false);
+        $admin->assertSee('id="videoFrameModal"', false);
+        $admin->assertSee('id="vf-canvas"', false);
+        $admin->assertSee('id="vf-video-input"', false);
+        $admin->assertSee('id="vf-style-select"', false);
+        $admin->assertSee('id="vf-theme-select"', false);
+        $admin->assertSee('id="vf-aspect-select"', false);
+        $admin->assertSee('id="vf-render-btn"', false);
+        $admin->assertSee('window.ADMIN_VIDEO_FRAMER_CONFIG', false);
+        $admin->assertSee('/js/admin-video-framer.js', false);
+        $this->assertFileExists(public_path('js/admin-video-framer.js'));
+
+        // Verify zero server-side video upload endpoints exist
+        $routes = collect(\Illuminate\Support\Facades\Route::getRoutes())->map(fn ($r) => $r->uri())->all();
+        foreach ($routes as $uri) {
+            $this->assertStringNotContainsString('video', strtolower((string) $uri));
+        }
+    }
 }

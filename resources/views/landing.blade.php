@@ -554,8 +554,7 @@
                                                     <span class="material-symbols-outlined text-4xl text-primary mb-1"
                                                         aria-hidden="true">devices</span>
                                                     <span
-                                                        class="font-label-spec text-label-spec uppercase text-on-surface-variant">[FOTO
-                                                        MENYUSUL]</span>
+                                                        class="font-label-spec text-label-spec uppercase text-on-surface-variant">[FOTO MENYUSUL]</span>
                                                 </div>
                                             @endif
                                         </div>
@@ -847,8 +846,7 @@
                                                 class="font-label-code text-label-code font-bold uppercase text-slate-charcoal">{{ $product['brand'] }}
                                                 • {{ $product['category'] }}</span>
                                             <span
-                                                class="font-label-spec text-label-spec uppercase text-on-surface-variant mt-0.5">[FOTO
-                                                MENYUSUL]</span>
+                                                class="font-label-spec text-label-spec uppercase text-on-surface-variant mt-0.5">[FOTO MENYUSUL]</span>
                                         </div>
                                     @endif
                                     <div
@@ -971,8 +969,7 @@
                         class="hidden text-center py-12 px-4 bg-surface-container-lowest border-[2.5px] border-canvas-border shadow-[4px_4px_0px_#111111] my-4">
                         <span class="material-symbols-outlined text-4xl text-primary mb-2"
                             aria-hidden="true">search_off</span>
-                        <h3 class="font-headline-sm text-body-lg font-bold uppercase text-slate-charcoal mb-1">Produk
-                            Tidak Ditemukan</h3>
+                        <h3 class="font-headline-sm text-body-lg font-bold uppercase text-slate-charcoal mb-1">Produk Tidak Ditemukan</h3>
                         <p class="font-body-sm text-on-surface-variant max-w-md mx-auto">Tidak ada produk yang cocok
                             dengan kata kunci atau filter yang dipilih.</p>
                         <button type="button" id="catalog-reset-btn"
@@ -1119,8 +1116,7 @@
                             </div>
                             <a href="{{ $mapLink }}" target="_blank" rel="noopener noreferrer"
                                 class="w-full min-h-[44px] inline-flex items-center justify-center px-5 py-3 bg-wood-ochre-light hover:bg-white text-slate-charcoal font-headline-sm text-body-sm font-bold uppercase border-[2.5px] border-canvas-border shadow-[3px_3px_0px_#111111] transition-all">
-                                <span class="material-symbols-outlined mr-2" aria-hidden="true">reviews</span>Lihat
-                                Ulasan Asli di Google Maps
+                                <span class="material-symbols-outlined mr-2" aria-hidden="true">reviews</span>Lihat Ulasan Asli di Google Maps
                             </a>
                         </div>
                     </div>

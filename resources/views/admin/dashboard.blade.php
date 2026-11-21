@@ -185,6 +185,7 @@
         <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h1 class="fw-bold font-headline fs-5 mb-0">Dashboard Admin: {{ $catalog['store_name'] }}</h1>
             <div class="d-flex flex-wrap gap-2">
+                <button type="button" id="btn-open-video-framer" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#videoFrameModal" title="Tambahkan bingkai toko ke video langsung di browser tanpa membebani server">Bingkai Video</button>
                 <a href="/admin/backup" class="btn btn-light btn-sm" title="Download backup data katalog JSON">Backup JSON</a>
                 <a href="/" target="_blank" class="btn btn-primary btn-sm">Lihat Landing Page</a>
                 <form method="POST" action="/admin/logout" class="m-0">
@@ -885,6 +886,8 @@
     </div>
 </div>
 
+@include('admin.partials.video-framer-modal')
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
@@ -1493,6 +1496,14 @@ const STORY_THEMES = {
         captionHook: 'Spesial Pesta Demokrasi! Habis nyoblos jangan lupa klaim diskon jari tinta ungu:',
         captionClosing: 'Cukup tunjukin jari tinta ungu kamu buat dapetin harga spesial ini di toko atau via chat!',
     }
+};
+
+window.ADMIN_VIDEO_FRAMER_CONFIG = {
+    storeName: STORE_NAME,
+    storeLogo: STORE_LOGO,
+    storeWa: STORE_WA,
+    storeAddress: STORE_ADDRESS,
+    themes: STORY_THEMES,
 };
 
 function getActiveStoryTheme() {
@@ -2109,5 +2120,6 @@ document.querySelectorAll('.icon-pick-btn').forEach((btn) => {
     });
 });
 </script>
+<script src="/js/admin-video-framer.js"></script>
 </body>
 </html>
